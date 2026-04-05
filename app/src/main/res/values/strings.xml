@@ -1,0 +1,51 @@
+<resources>
+    <string name="app_name">App</string>
+    <string name="accessibility_description">Monitors newly installed apps to detect harmful applications.</string>
+    <string name="harmful_app_warning_title">Potentially Harmful App</string>
+    <string name="harmful_app_warning_message">This app was not installed from the Play Store. It could be harmful or contain malware.</string>
+    <string name="harmful_app_warning_ok">OK</string>
+    <string name="uninstall_app">Uninstall App</string>
+    <string name="risk_title_low">Low Risk Detected</string>
+    <string name="risk_title_medium">Security Alert</string>
+    <string name="risk_title_high">High Risk Warning</string>
+    <string name="risk_title_critical">Critical Threat Detected</string>
+    <string name="risk_dismiss_understand">I Understand</string>
+    <string name="risk_dismiss_keep">Keep Anyway</string>
+    <string name="uninstall_now">Uninstall Now</string>
+    <string name="scanning_app">Scanning %s…</string>
+    <string name="app_verified_safe">%s verified as safe</string>
+
+    <!-- Guardian Protection -->
+    <string name="guardian_alert_title">Guardian Alert</string>
+    <string name="guardian_alert_message">Someone you protect installed an app that looks risky. Review the details below.</string>
+    <string name="guardian_acknowledge">Got It</string>
+    <string name="guardian_feature_label">GUARDIAN PROTECTION</string>
+    <string name="guardian_label_app_installed">APP INSTALLED</string>
+    <string name="guardian_label_what_happened">WHAT HAPPENED</string>
+    <string name="guardian_risk_score_fmt">Risk score: %1$d/100</string>
+    <string name="guardian_badge_risky_app">GUARDIAN ALERT</string>
+    <string name="guardian_badge_call_scam">CALL — SCAM SIGNAL</string>
+    <string name="guardian_badge_call_safety">CALL — SAFE WORD</string>
+    <string name="guardian_tag_call_scam">Live caption</string>
+    <string name="guardian_tag_call_safety">Check-in</string>
+    <string name="guardian_title_call_scam">Possible scam on a call</string>
+    <string name="guardian_subtitle_call_scam">During a monitored WhatsApp call, the live transcript matched wording often used in “digital arrest”–style scams. The person you protect may be stressed or pressured—consider contacting them outside the call.</string>
+    <string name="guardian_title_call_safety">They used their safety word</string>
+    <string name="guardian_subtitle_call_safety">During a monitored call they said the agreed safe word. They may want help or a quiet check-in, even if the conversation sounds normal.</string>
+    <string name="guardian_details_heading">Details</string>
+    <string name="guardian_detail_fallback">No extra details were sent with this alert.</string>
+
+    <!-- WhatsApp Call Recorder -->
+    <string name="whatsapp_recorder_title">WHATSAPP RECORDER</string>
+    <string name="recording_active">Recording Active</string>
+    <string name="recording_idle">Recorder Ready</string>
+    <string name="recording_idle_description">WhatsApp calls will be recorded automatically\nwhen the accessibility service is active.</string>
+    <string name="recording_active_description">Currently recording a WhatsApp call…</string>
+    <string name="no_recordings">No recordings yet</string>
+    <string name="no_recordings_description">Your WhatsApp call recordings will appear here.</string>
+    <string name="grant_audio_permission">Grant Audio Permission</string>
+    <string name="audio_permission_needed">Microphone permission is required\nto record WhatsApp calls.</string>
+    <string name="recording_notification_title">Recording WhatsApp call</string>
+    <string name="recording_notification_text">Tap to open the app</string>
+    <string name="call_recording_channel_name">Call Recording</string>
+</resources>

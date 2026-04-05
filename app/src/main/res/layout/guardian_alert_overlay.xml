@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#CC000000"
+    android:padding="24dp">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/harmful_app_card_bg"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Shield icon -->
+            <ImageView
+                android:id="@+id/guardian_icon"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_gravity="center_horizontal"
+                android:src="@android:drawable/ic_dialog_info"
+                android:contentDescription="@null" />
+
+            <!-- "GUARDIAN ALERT" badge -->
+            <TextView
+                android:id="@+id/guardian_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="12dp"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="4dp"
+                android:text="@string/guardian_badge_risky_app"
+                android:textColor="#FFFFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <!-- Risk level badge -->
+            <TextView
+                android:id="@+id/risk_level_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="6dp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="3dp"
+                android:textColor="#FFFFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <!-- Title -->
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="center"
+                android:textColor="#FFFFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <!-- Subtitle: "Someone you protect installed a risky app" -->
+            <TextView
+                android:id="@+id/subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#FF7A8394"
+                android:textSize="13sp" />
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="18dp"
+                android:layout_marginBottom="4dp"
+                android:background="#22FFFFFF" />
+
+            <!-- App name -->
+            <TextView
+                android:id="@+id/app_name_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="@string/guardian_label_app_installed"
+                android:textColor="#FF7A8394"
+                android:textSize="10sp"
+                android:letterSpacing="0.1" />
+
+            <TextView
+                android:id="@+id/app_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="#FFFFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/package_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="#FF7A8394"
+                android:textSize="12sp" />
+
+            <!-- Risk details -->
+            <TextView
+                android:id="@+id/risk_score"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="#FF7A8394"
+                android:textSize="13sp" />
+
+            <!-- Shown for call-based alerts above the detail text -->
+            <TextView
+                android:id="@+id/primary_reason_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="@string/guardian_details_heading"
+                android:textColor="#FF7A8394"
+                android:textSize="10sp"
+                android:letterSpacing="0.1"
+                android:visibility="gone" />
+
+            <!-- Primary reason -->
+            <TextView
+                android:id="@+id/primary_reason"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="#FFB0BAC8"
+                android:textSize="13sp"
+                android:lineSpacingExtra="3dp"
+                android:visibility="gone" />
+
+            <!-- Acknowledge button -->
+            <Button
+                android:id="@+id/acknowledge_button"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="20dp"
+                android:text="@string/guardian_acknowledge"
+                android:textColor="#FF0D0F14"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>
