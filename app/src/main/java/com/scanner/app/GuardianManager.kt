@@ -142,7 +142,8 @@ object GuardianManager {
         riskLevel: String,
         riskScore: Int,
         primaryReason: String?,
-        alertKind: String = GuardianAlertKind.RISKY_APP
+        alertKind: String = GuardianAlertKind.RISKY_APP,
+        protectedUserPhone: String? = null
     ) {
         try {
             val body = JSONObject().apply {
@@ -153,6 +154,7 @@ object GuardianManager {
                 put("riskScore", riskScore)
                 put("alertKind", alertKind)
                 if (primaryReason != null) put("primaryReason", primaryReason)
+                if (!protectedUserPhone.isNullOrBlank()) put("protectedUserPhone", protectedUserPhone)
             }.toString()
 
             val conn = URL(CLOUD_FN_URL).openConnection() as HttpURLConnection

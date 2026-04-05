@@ -20,6 +20,7 @@ initializeApp();
  *   riskScore      – integer 0–100
  *   primaryReason  – (optional) human-readable risk reason
  *   alertKind      – (optional) RISKY_APP | CALL_SCAM | CALL_SAFETY (default RISKY_APP)
+ *   protectedUserPhone – (optional) digits for guardian “Call them” on call alerts
  */
 exports.notifyGuardians = onRequest(
   { cors: true, timeoutSeconds: 30 },
@@ -36,6 +37,7 @@ exports.notifyGuardians = onRequest(
       riskScore,
       primaryReason,
       alertKind,
+      protectedUserPhone,
     } = req.body;
 
     if (!userId || !appName || !packageName || !riskLevel) {
@@ -78,6 +80,7 @@ exports.notifyGuardians = onRequest(
         riskLevel: riskLevel,
         riskScore: String(riskScore ?? 0),
         primaryReason: primaryReason ?? "",
+        protectedUserPhone: protectedUserPhone ?? "",
       },
       // High priority ensures delivery even when the device is idle
       android: {

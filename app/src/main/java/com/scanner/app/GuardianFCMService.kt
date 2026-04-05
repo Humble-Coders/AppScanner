@@ -44,7 +44,8 @@ class GuardianFCMService : FirebaseMessagingService() {
                 riskLevel = data["riskLevel"] ?: "UNKNOWN",
                 riskScore = data["riskScore"]?.toIntOrNull() ?: 0,
                 primaryReason = data["primaryReason"]?.takeIf { it.isNotBlank() },
-                protectedUserUid = data["protectedUserUid"] ?: ""
+                protectedUserUid = data["protectedUserUid"] ?: "",
+                protectedUserPhone = data["protectedUserPhone"]?.takeIf { it.isNotBlank() }
             )
             GuardianAlertSource.tryEmit(alert)
         }

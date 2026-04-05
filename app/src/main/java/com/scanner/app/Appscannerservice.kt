@@ -3,6 +3,7 @@ package com.scanner.app
 import android.accessibilityservice.AccessibilityService
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -24,6 +25,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -413,11 +415,39 @@ class AppScannerService : AccessibilityService() {
                     }
                 }
 
+                val phoneDigits = alert.protectedUserPhone
+                    ?.filter { it.isDigit() }
+                    ?.takeIf { it.isNotBlank() }
+                val showCallThem = (alert.alertKind == GuardianAlertKind.CALL_SCAM ||
+                    alert.alertKind == GuardianAlertKind.CALL_SAFETY) && phoneDigits != null
+                ackBtn.text = getString(
+                    if (showCallThem) R.string.guardian_call_them else R.string.guardian_acknowledge
+                )
+
                 ackBtn.setOnClickListener {
+                    GuardianAlertSoundPlayer.stopEmergencyAlert()
                     try {
                         wm.removeView(root)
                     } catch (e: Exception) {
                         Log.e(TAG, "removeView guardian overlay failed", e)
+                    }
+                    if (showCallThem && phoneDigits != null) {
+                        val uri = Uri.parse("tel:$phoneDigits")
+                        val dial = Intent(Intent.ACTION_DIAL, uri).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        val call = Intent(Intent.ACTION_CALL, uri).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        try {
+                            val canCall = ContextCompat.checkSelfPermission(
+                                this@AppScannerService,
+                                Manifest.permission.CALL_PHONE
+                            ) == PackageManager.PERMISSION_GRANTED
+                            startActivity(if (canCall) call else dial)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "guardian dial/call failed", e)
+                        }
                     }
                 }
 

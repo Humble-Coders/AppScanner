@@ -19,6 +19,7 @@
     <string name="guardian_alert_title">Guardian Alert</string>
     <string name="guardian_alert_message">Someone you protect installed an app that looks risky. Review the details below.</string>
     <string name="guardian_acknowledge">Got It</string>
+    <string name="guardian_call_them">Call them</string>
     <string name="guardian_feature_label">GUARDIAN PROTECTION</string>
     <string name="guardian_label_app_installed">APP INSTALLED</string>
     <string name="guardian_label_what_happened">WHAT HAPPENED</string>
@@ -34,6 +35,12 @@
     <string name="guardian_subtitle_call_safety">During a monitored call they said the agreed safe word. They may want help or a quiet check-in, even if the conversation sounds normal.</string>
     <string name="guardian_details_heading">Details</string>
     <string name="guardian_detail_fallback">No extra details were sent with this alert.</string>
+
+    <string name="overlay_permission_title">DISPLAY OVER OTHER APPS</string>
+    <string name="overlay_permission_body">Allow this app to draw on top of other apps so guardian alerts, scam warnings, and risk overlays can appear when something important happens.</string>
+    <string name="overlay_permission_steps_hint">In system settings, find this app and turn on “Display over other apps” (wording may vary by phone).</string>
+    <string name="overlay_permission_open_settings">Open overlay settings</string>
+    <string name="overlay_permission_continue">I’ve turned it on — Continue</string>
 
     <!-- WhatsApp Call Recorder -->
     <string name="whatsapp_recorder_title">WHATSAPP RECORDER</string>

@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.flow.collectLatest
 
 private const val TAG = "AppScanner"
@@ -48,6 +49,10 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { /* granted or denied — either way proceed */ }
 
+    private val callPhonePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* guardian “Call them” uses ACTION_CALL when granted */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "MainActivity.onCreate")
@@ -57,6 +62,10 @@ class MainActivity : ComponentActivity() {
         }
 
         audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            callPhonePermissionLauncher.launch(Manifest.permission.CALL_PHONE)
+        }
 
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
@@ -86,6 +95,25 @@ fun AppShell() {
 
     if (showPhoneGate) {
         PhoneOnboardingScreen(onFinished = { showPhoneGate = false })
+        return
+    }
+
+    var overlayGranted by remember { mutableStateOf(overlayPermissionGranted(context)) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                overlayGranted = overlayPermissionGranted(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    if (!overlayGranted) {
+        OverlayPermissionScreen(
+            onRecheck = { overlayGranted = overlayPermissionGranted(context) }
+        )
         return
     }
 

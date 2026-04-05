@@ -290,7 +290,8 @@ class CallRecordingService : Service() {
                     riskLevel = "CRITICAL",
                     riskScore = 95,
                     primaryReason = "Possible scam detected: phrase similar to 'digital arrest' heard during call.",
-                    alertKind = GuardianAlertKind.CALL_SCAM
+                    alertKind = GuardianAlertKind.CALL_SCAM,
+                    protectedUserPhone = GuardianPhoneStore.getMyNormalizedPhone(this@CallRecordingService)
                 )
                 Log.i(TAG, "[RecService] Guardian alert sent for digital-arrest scam phrase")
             } catch (e: Exception) {
@@ -310,7 +311,8 @@ class CallRecordingService : Service() {
                     riskLevel = "HIGH",
                     riskScore = 90,
                     primaryReason = "Safety word detected: user may not be feeling safe on this call.",
-                    alertKind = GuardianAlertKind.CALL_SAFETY
+                    alertKind = GuardianAlertKind.CALL_SAFETY,
+                    protectedUserPhone = GuardianPhoneStore.getMyNormalizedPhone(this@CallRecordingService)
                 )
                 Log.i(TAG, "[RecService] Guardian safety alert sent for 'humble' keyword")
             } catch (e: Exception) {

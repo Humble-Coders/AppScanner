@@ -59,6 +59,11 @@ object GuardianAlertSoundPlayer {
         }
     }
 
+    /** Stops any in-progress emergency clip (e.g. when the guardian dismisses the alert). */
+    fun stopEmergencyAlert() {
+        synchronized(lock) { stopLocked() }
+    }
+
     private fun stopLocked() {
         val p = player
         player = null
