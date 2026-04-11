@@ -45,6 +45,7 @@ class CallRecordingService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private var isRecordingActive = false
     private var hasRaisedScamAlertForCall = false
+    private var hasRaisedSafetyAlertForCall = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -70,6 +71,7 @@ class CallRecordingService : Service() {
             return
         }
         hasRaisedScamAlertForCall = false
+        hasRaisedSafetyAlertForCall = false
 
         Log.i(TAG, "[RecService] startRecording() — beginning setup")
 
@@ -130,6 +132,7 @@ class CallRecordingService : Service() {
         }
         isRecordingActive = false
         hasRaisedScamAlertForCall = false
+        hasRaisedSafetyAlertForCall = false
 
         captionPipeline?.stop()
         captionPipeline = null
@@ -249,20 +252,18 @@ class CallRecordingService : Service() {
     }
 
     private fun onTranscriptReceived(transcript: String) {
-        if (hasRaisedScamAlertForCall) return
-        when {
-            containsHumble(transcript) -> {
-                hasRaisedScamAlertForCall = true
-                Log.w(TAG, "[RecService] Safety word detected in call transcript: \"$transcript\"")
-                showGuardianContactedOverlay()
-                notifyGuardiansSafetyAlert()
-            }
-            containsDigitalArrest(transcript) -> {
-                hasRaisedScamAlertForCall = true
-                Log.w(TAG, "[RecService] Scam phrase detected in call transcript: \"$transcript\"")
-                showScamWarningOverlay()
-                notifyGuardiansScamAlert()
-            }
+        if (containsDigitalArrest(transcript) && !hasRaisedScamAlertForCall) {
+            hasRaisedScamAlertForCall = true
+            Log.w(TAG, "[RecService] Scam phrase detected in call transcript: \"$transcript\"")
+            ScamAlertState.markScamDetected()
+            showScamWarningOverlay()
+            notifyGuardiansScamAlert()
+        }
+        if (containsHumble(transcript) && !hasRaisedSafetyAlertForCall) {
+            hasRaisedSafetyAlertForCall = true
+            Log.w(TAG, "[RecService] Safety word detected in call transcript: \"$transcript\"")
+            showGuardianContactedOverlay()
+            notifyGuardiansSafetyAlert()
         }
     }
 
@@ -342,7 +343,7 @@ class CallRecordingService : Service() {
                 scamWarningOverlayView = root
                 root.findViewById<TextView>(R.id.caption_label).text = "SCAM WARNING"
                 root.findViewById<TextView>(R.id.caption_text).text =
-                    "Possible DIGITAL ARREST scam detected in this call. Do not share money, OTP, or personal details."
+                    "This may be a scam (\"digital arrest\" style). Do not share OTP, money, or personal details."
                 val params = WindowManager.LayoutParams().apply {
                     width = WindowManager.LayoutParams.MATCH_PARENT
                     height = WindowManager.LayoutParams.MATCH_PARENT

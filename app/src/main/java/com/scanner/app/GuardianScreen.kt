@@ -6,9 +6,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,6 +36,7 @@ import kotlinx.coroutines.launch
 fun GuardianScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var showPitchRoleDialog by remember { mutableStateOf(false) }
 
     val bg = Color(0xFF0D0F14)
     val accent = Color(0xFF00E5A0)
@@ -109,6 +113,15 @@ fun GuardianScreen() {
                 lineHeight = 20.sp,
                 textAlign = TextAlign.Center
             )
+            GuardianPhoneStore.getMyDisplayName(context)?.let { nm ->
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "Name: $nm",
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
             GuardianPhoneStore.getMyNormalizedPhone(context)?.let { num ->
                 Spacer(Modifier.height(10.dp))
                 Text(
@@ -240,8 +253,14 @@ fun GuardianScreen() {
                         scope.launch {
                             phoneLinkBusy = true
                             try {
-                                GuardianManager.linkGuardianByPhoneNumber(context, guardianPhoneInput)
-                                phoneLinkMessage = "They are now your guardian and will get your alerts."
+                                val guardianName =
+                                    GuardianManager.linkGuardianByPhoneNumber(context, guardianPhoneInput)
+                                guardianPhoneInput = ""
+                                phoneLinkMessage = if (!guardianName.isNullOrBlank()) {
+                                    "$guardianName is now your guardian and will get your alerts."
+                                } else {
+                                    "This person is now your guardian and will get your alerts."
+                                }
                                 phoneLinkError = false
                             } catch (e: Exception) {
                                 phoneLinkError = true
@@ -401,6 +420,81 @@ fun GuardianScreen() {
             }
             Spacer(Modifier.height(32.dp))
         }
+
+        // Pitch debug: label this device as guardian or victim phone
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                IconButton(
+                    onClick = { showPitchRoleDialog = true },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.BugReport,
+                        contentDescription = "Pitch: set guardian or victim label",
+                        tint = textSecondary.copy(alpha = 0.55f),
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+        }
+    }
+
+    val pitchRole by PitchPhoneRoleStore.role.collectAsState()
+
+    if (showPitchRoleDialog) {
+        AlertDialog(
+            onDismissRequest = { showPitchRoleDialog = false },
+            title = { Text("Pitch device label") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Shown in the top bar on Scanner and Guardian tabs.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 13.sp
+                    )
+                    PitchPhoneRole.values().forEach { option ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    PitchPhoneRoleStore.setRole(context, option)
+                                    showPitchRoleDialog = false
+                                }
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = pitchRole == option,
+                                onClick = {
+                                    PitchPhoneRoleStore.setRole(context, option)
+                                    showPitchRoleDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                when (option) {
+                                    PitchPhoneRole.GUARDIAN -> "Guardian phone"
+                                    PitchPhoneRole.VICTIM -> "Victim phone"
+                                },
+                                fontSize = 15.sp
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showPitchRoleDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }
 

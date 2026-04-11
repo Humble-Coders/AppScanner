@@ -86,9 +86,15 @@ fun isAccessibilityEnabled(context: android.content.Context): Boolean {
     return isEnabled
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppShell() {
     val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        PitchPhoneRoleStore.syncFromDisk(context)
+    }
+    val pitchRole by PitchPhoneRoleStore.role.collectAsState()
+
     var showPhoneGate by remember {
         mutableStateOf(!GuardianPhoneStore.isOnboardingDone(context))
     }
@@ -126,8 +132,36 @@ fun AppShell() {
 
     var selectedTab by remember { mutableIntStateOf(0) }
 
+    val victimPitchColor = Color(0xFFFF6D00)
+    val pitchTopBarTitle = when (pitchRole) {
+        PitchPhoneRole.GUARDIAN -> "Guardian"
+        PitchPhoneRole.VICTIM -> "Victim"
+    }
+    val pitchTopBarColor = when (pitchRole) {
+        PitchPhoneRole.GUARDIAN -> guardianBlue
+        PitchPhoneRole.VICTIM -> victimPitchColor
+    }
+
     Scaffold(
         containerColor = bg,
+        topBar = {
+            if (selectedTab == 0 || selectedTab == 1) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            text = pitchTopBarTitle,
+                            color = pitchTopBarColor,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = cardBg,
+                        titleContentColor = Color.White
+                    )
+                )
+            }
+        },
         bottomBar = {
             NavigationBar(
                 containerColor = cardBg,

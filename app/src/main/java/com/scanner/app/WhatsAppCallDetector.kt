@@ -92,6 +92,10 @@ class WhatsAppCallDetector {
                     if (isWhatsApp && isCallActivity) {
                         state = State.IN_CALL
                         Log.i(TAG, "[Detector] >>> CALL STARTED: pkg=$pkg class=$className (exact=$isExactCallActivity)")
+                        WhatsAppCallJourney.i(
+                            "detector",
+                            "CALL_STARTED pkg=$pkg activity=$className exactCallActivity=$isExactCallActivity"
+                        )
                         CallStateChange.CallStarted
                     } else null
                 }
@@ -110,12 +114,20 @@ class WhatsAppCallDetector {
                         state = State.MAYBE_ENDED
                         maybeEndedTimestamp = System.currentTimeMillis()
                         Log.i(TAG, "[Detector] ??? MAYBE ENDED: WhatsApp non-call UI: class=$className — waiting for confirmation")
+                        WhatsAppCallJourney.i(
+                            "detector",
+                            "MAYBE_ENDED reason=whatsapp_non_call_ui class=$className"
+                        )
                         CallStateChange.CallMaybeEnded
                     } else {
                         // Different app entirely — maybe call ended
                         state = State.MAYBE_ENDED
                         maybeEndedTimestamp = System.currentTimeMillis()
                         Log.i(TAG, "[Detector] ??? MAYBE ENDED: switched to pkg=$pkg class=$className — waiting for confirmation")
+                        WhatsAppCallJourney.i(
+                            "detector",
+                            "MAYBE_ENDED reason=other_app pkg=$pkg class=$className"
+                        )
                         CallStateChange.CallMaybeEnded
                     }
                 }
@@ -126,6 +138,10 @@ class WhatsAppCallDetector {
                         state = State.IN_CALL
                         val elapsed = System.currentTimeMillis() - maybeEndedTimestamp
                         Log.i(TAG, "[Detector] >>> CALL RESUMED after ${elapsed}ms: class=$className — false alarm!")
+                        WhatsAppCallJourney.i(
+                            "detector",
+                            "CALL_RESUMED after ${elapsed}ms activity=$className"
+                        )
                         CallStateChange.CallResumed
                     } else if (isIgnorablePackage) {
                         // Still in MAYBE_ENDED, ignore system overlays
@@ -161,6 +177,7 @@ class WhatsAppCallDetector {
             state = State.IDLE
             val elapsed = System.currentTimeMillis() - maybeEndedTimestamp
             Log.i(TAG, "[Detector] <<< CALL CONFIRMED ENDED after ${elapsed}ms debounce")
+            WhatsAppCallJourney.i("detector", "CALL_CONFIRMED_ENDED after ${elapsed}ms debounce")
             return true
         }
         return false

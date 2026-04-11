@@ -55,12 +55,14 @@ object GuardianManager {
                 SetOptions.merge()
             ).await()
         val phone = context?.let { GuardianPhoneStore.getMyNormalizedPhone(it) }
+        val name = context?.let { GuardianPhoneStore.getMyDisplayName(it) }
         if (!phone.isNullOrBlank()) {
             db.collection("phoneDirectory").document(phone)
                 .set(
                     mapOf(
                         "userId" to uid,
                         "fcmToken" to token,
+                        "displayName" to (name ?: ""),
                         "updatedAt" to FieldValue.serverTimestamp()
                     ),
                     SetOptions.merge()
@@ -75,17 +77,19 @@ object GuardianManager {
     /**
      * Saves local phone + publishes [userId] and FCM token under phoneDirectory for guardian lookup.
      */
-    suspend fun registerMyPhoneNumber(context: Context, rawPhone: String) {
+    suspend fun registerMyPhoneNumber(context: Context, displayName: String, rawPhone: String) {
         val normalized = normalizePhoneInput(rawPhone)
+        val name = displayName.trim()
+        require(name.isNotBlank()) { "Enter your name" }
         require(normalized.isNotBlank()) { "Enter a phone number" }
-        GuardianPhoneStore.saveMyPhone(context, normalized)
+        GuardianPhoneStore.saveMyProfile(context, name, normalized)
         refreshFcmToken(context)
     }
 
     /**
      * Protected user: copy guardian's FCM token from [phoneDirectory] into guardians/{myUid}/tokens/{guardianUid}.
      */
-    suspend fun linkGuardianByPhoneNumber(context: Context, rawGuardianPhone: String) {
+    suspend fun linkGuardianByPhoneNumber(context: Context, rawGuardianPhone: String): String? {
         val myUid = getOrCreateUserId()
         val normalized = normalizePhoneInput(rawGuardianPhone)
         require(normalized.isNotBlank()) { "Enter a phone number" }
@@ -95,6 +99,7 @@ object GuardianManager {
             ?: error("This number is not registered in the app yet")
         val token = doc.getString("fcmToken")
             ?: error("Guardian must open the app once so alerts can be delivered")
+        val guardianName = doc.getString("displayName")?.trim()?.takeIf { it.isNotBlank() }
 
         require(guardianUid != myUid) { "You cannot add yourself as guardian" }
 
@@ -107,6 +112,7 @@ object GuardianManager {
                 )
             ).await()
         Log.d(TAG, "Linked guardian ${guardianUid.take(8)}… for protected ${myUid.take(8)}… by phone")
+        return guardianName
     }
 
     /**

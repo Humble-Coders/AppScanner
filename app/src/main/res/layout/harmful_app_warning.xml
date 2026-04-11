@@ -109,6 +109,18 @@
                 android:visibility="gone" />
 
             <Button
+                android:id="@+id/call_them_button"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="#FF448AFF"
+                android:text="@string/guardian_call_them"
+                android:textColor="#FFFFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <Button
                 android:id="@+id/ok_button"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"

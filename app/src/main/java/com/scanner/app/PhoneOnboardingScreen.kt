@@ -27,6 +27,7 @@ fun PhoneOnboardingScreen(onFinished: () -> Unit) {
     val cardBg = Color(0xFF161A22)
     val textSecondary = Color(0xFF7A8394)
 
+    var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var errorText by remember { mutableStateOf<String?>(null) }
@@ -40,7 +41,7 @@ fun PhoneOnboardingScreen(onFinished: () -> Unit) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "YOUR PHONE NUMBER",
+            text = "GET STARTED",
             color = accent,
             fontSize = 11.sp,
             letterSpacing = 3.sp,
@@ -48,7 +49,7 @@ fun PhoneOnboardingScreen(onFinished: () -> Unit) {
         )
         Spacer(Modifier.height(12.dp))
         Text(
-            text = "Enter the number others will use to add you.\nNo verification — we only use anonymous sign-in.",
+            text = "Enter your name and mobile number.\nNo OTP — this is only used for linking guardians.",
             color = textSecondary,
             fontSize = 14.sp,
             lineHeight = 22.sp,
@@ -62,6 +63,23 @@ fun PhoneOnboardingScreen(onFinished: () -> Unit) {
                 .background(cardBg, RoundedCornerShape(16.dp))
                 .padding(20.dp)
         ) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Name") },
+                placeholder = { Text("e.g. Rahul") },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = accent,
+                    unfocusedBorderColor = textSecondary,
+                    focusedLabelColor = accent,
+                    cursorColor = accent,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+            Spacer(Modifier.height(12.dp))
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
@@ -93,7 +111,7 @@ fun PhoneOnboardingScreen(onFinished: () -> Unit) {
                 scope.launch {
                     busy = true
                     try {
-                        GuardianManager.registerMyPhoneNumber(context, phone)
+                        GuardianManager.registerMyPhoneNumber(context, name, phone)
                         onFinished()
                     } catch (e: Exception) {
                         errorText = e.message ?: "Something went wrong"
@@ -105,7 +123,7 @@ fun PhoneOnboardingScreen(onFinished: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
-            enabled = !busy && phone.any { it.isDigit() },
+            enabled = !busy && name.isNotBlank() && phone.any { it.isDigit() },
             colors = ButtonDefaults.buttonColors(
                 containerColor = accent,
                 contentColor = Color(0xFF0D0F14)

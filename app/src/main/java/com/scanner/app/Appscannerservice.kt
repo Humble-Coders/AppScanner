@@ -46,6 +46,9 @@ class AppScannerService : AccessibilityService() {
         private const val CALL_END_DEBOUNCE_MS = 18000L
         /** Cube ACR: delay before starting recording to let audio path stabilize. */
         private const val RECORDING_START_DELAY_MS = 5000L
+        /** If a scam phrase was detected, warn if a payment app opens soon after. */
+        private const val SCAM_PAYMENT_WARNING_WINDOW_MS = 10 * 60 * 1000L
+        private const val GOOGLE_PAY_PACKAGE = "com.google.android.apps.nbu.paisa.user"
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -262,6 +265,23 @@ class AppScannerService : AccessibilityService() {
                     }
                 }
 
+                val harmfulCallBtn = root.findViewById<Button>(R.id.call_them_button)
+                if (response.riskLevel in listOf("MEDIUM", "HIGH", "CRITICAL")) {
+                    harmfulCallBtn.visibility = View.VISIBLE
+                    harmfulCallBtn.setOnClickListener {
+                        try {
+                            startActivity(
+                                Intent(Intent.ACTION_DIAL).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                            )
+                        } catch (e: Exception) {
+                            Log.e(TAG, "harmful overlay dial failed", e)
+                        }
+                        removeCurrentOverlay()
+                    }
+                }
+
                 // Dismiss button
                 val okBtn = root.findViewById<Button>(R.id.ok_button)
                 okBtn.text = when (response.riskLevel) {
@@ -309,7 +329,8 @@ class AppScannerService : AccessibilityService() {
                 packageName = packageName,
                 riskLevel = response.riskLevel,
                 riskScore = response.riskScore,
-                primaryReason = response.primaryReason
+                primaryReason = response.primaryReason,
+                protectedUserPhone = GuardianPhoneStore.getMyNormalizedPhone(this@AppScannerService)
             )
         }
     }
@@ -333,7 +354,8 @@ class AppScannerService : AccessibilityService() {
                 val reasonLabel = root.findViewById<TextView>(R.id.primary_reason_label)
                 val reasonView = root.findViewById<TextView>(R.id.primary_reason)
                 val icon = root.findViewById<ImageView>(R.id.guardian_icon)
-                val ackBtn = root.findViewById<Button>(R.id.acknowledge_button)
+                val leftBtn = root.findViewById<Button>(R.id.left_action_button)
+                val rightBtn = root.findViewById<Button>(R.id.right_action_button)
 
                 when (alert.alertKind) {
                     GuardianAlertKind.CALL_SCAM -> {
@@ -355,8 +377,6 @@ class AppScannerService : AccessibilityService() {
                         reasonView.visibility = View.VISIBLE
                         reasonView.text = alert.primaryReason?.takeIf { it.isNotBlank() }
                             ?: getString(R.string.guardian_detail_fallback)
-                        ackBtn.backgroundTintList = ColorStateList.valueOf(accent)
-                        ackBtn.setTextColor(Color.WHITE)
                     }
                     GuardianAlertKind.CALL_SAFETY -> {
                         val accent = Color.parseColor("#00C853")
@@ -377,8 +397,6 @@ class AppScannerService : AccessibilityService() {
                         reasonView.visibility = View.VISIBLE
                         reasonView.text = alert.primaryReason?.takeIf { it.isNotBlank() }
                             ?: getString(R.string.guardian_detail_fallback)
-                        ackBtn.backgroundTintList = ColorStateList.valueOf(accent)
-                        ackBtn.setTextColor(Color.WHITE)
                     }
                     else -> {
                         val riskColor = riskColor(alert.riskLevel)
@@ -410,44 +428,101 @@ class AppScannerService : AccessibilityService() {
                         } else {
                             reasonView.visibility = View.GONE
                         }
-                        ackBtn.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#448AFF"))
-                        ackBtn.setTextColor(Color.parseColor("#FF0D0F14"))
                     }
                 }
 
                 val phoneDigits = alert.protectedUserPhone
                     ?.filter { it.isDigit() }
                     ?.takeIf { it.isNotBlank() }
-                val showCallThem = (alert.alertKind == GuardianAlertKind.CALL_SCAM ||
-                    alert.alertKind == GuardianAlertKind.CALL_SAFETY) && phoneDigits != null
-                ackBtn.text = getString(
-                    if (showCallThem) R.string.guardian_call_them else R.string.guardian_acknowledge
-                )
+                val isCallKind = alert.alertKind == GuardianAlertKind.CALL_SCAM ||
+                    alert.alertKind == GuardianAlertKind.CALL_SAFETY
+                val darkSecondary = Color.parseColor("#2A3040")
+                val secondaryText = Color.parseColor("#7A8394")
+                val guardianBlue = Color.parseColor("#448AFF")
+                val darkOnAccent = Color.parseColor("#FF0D0F14")
 
-                ackBtn.setOnClickListener {
+                fun dismissGuardianOverlay() {
                     GuardianAlertSoundPlayer.stopEmergencyAlert()
                     try {
                         wm.removeView(root)
                     } catch (e: Exception) {
                         Log.e(TAG, "removeView guardian overlay failed", e)
                     }
-                    if (showCallThem && phoneDigits != null) {
-                        val uri = Uri.parse("tel:$phoneDigits")
-                        val dial = Intent(Intent.ACTION_DIAL, uri).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+
+                fun launchDialToProtected() {
+                    val digits = phoneDigits ?: return
+                    val uri = Uri.parse("tel:$digits")
+                    val dial = Intent(Intent.ACTION_DIAL, uri).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    val call = Intent(Intent.ACTION_CALL, uri).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    try {
+                        val canCall = ContextCompat.checkSelfPermission(
+                            this@AppScannerService,
+                            Manifest.permission.CALL_PHONE
+                        ) == PackageManager.PERMISSION_GRANTED
+                        startActivity(if (canCall) call else dial)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "guardian dial/call failed", e)
+                    }
+                }
+
+                when {
+                    isCallKind && phoneDigits != null -> {
+                        leftBtn.visibility = View.VISIBLE
+                        rightBtn.visibility = View.VISIBLE
+                        leftBtn.text = getString(R.string.guardian_call_them)
+                        rightBtn.text = getString(R.string.guardian_ignore)
+                        if (alert.alertKind == GuardianAlertKind.CALL_SCAM) {
+                            val red = Color.parseColor("#FF1744")
+                            leftBtn.backgroundTintList = ColorStateList.valueOf(red)
+                            leftBtn.setTextColor(Color.WHITE)
+                        } else {
+                            val green = Color.parseColor("#00C853")
+                            leftBtn.backgroundTintList = ColorStateList.valueOf(green)
+                            leftBtn.setTextColor(Color.WHITE)
                         }
-                        val call = Intent(Intent.ACTION_CALL, uri).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        rightBtn.backgroundTintList = ColorStateList.valueOf(darkSecondary)
+                        rightBtn.setTextColor(secondaryText)
+                        leftBtn.setOnClickListener {
+                            launchDialToProtected()
+                            dismissGuardianOverlay()
                         }
-                        try {
-                            val canCall = ContextCompat.checkSelfPermission(
-                                this@AppScannerService,
-                                Manifest.permission.CALL_PHONE
-                            ) == PackageManager.PERMISSION_GRANTED
-                            startActivity(if (canCall) call else dial)
-                        } catch (e: Exception) {
-                            Log.e(TAG, "guardian dial/call failed", e)
+                        rightBtn.setOnClickListener { dismissGuardianOverlay() }
+                    }
+                    isCallKind -> {
+                        leftBtn.visibility = View.GONE
+                        rightBtn.visibility = View.VISIBLE
+                        rightBtn.text = getString(R.string.guardian_ignore)
+                        rightBtn.backgroundTintList = ColorStateList.valueOf(darkSecondary)
+                        rightBtn.setTextColor(secondaryText)
+                        rightBtn.setOnClickListener { dismissGuardianOverlay() }
+                    }
+                    phoneDigits != null -> {
+                        leftBtn.visibility = View.VISIBLE
+                        rightBtn.visibility = View.VISIBLE
+                        leftBtn.text = getString(R.string.guardian_call_them)
+                        rightBtn.text = getString(R.string.guardian_acknowledge)
+                        leftBtn.backgroundTintList = ColorStateList.valueOf(guardianBlue)
+                        leftBtn.setTextColor(Color.WHITE)
+                        rightBtn.backgroundTintList = ColorStateList.valueOf(guardianBlue)
+                        rightBtn.setTextColor(darkOnAccent)
+                        leftBtn.setOnClickListener {
+                            launchDialToProtected()
+                            dismissGuardianOverlay()
                         }
+                        rightBtn.setOnClickListener { dismissGuardianOverlay() }
+                    }
+                    else -> {
+                        leftBtn.visibility = View.GONE
+                        rightBtn.visibility = View.VISIBLE
+                        rightBtn.text = getString(R.string.guardian_acknowledge)
+                        rightBtn.backgroundTintList = ColorStateList.valueOf(guardianBlue)
+                        rightBtn.setTextColor(darkOnAccent)
+                        rightBtn.setOnClickListener { dismissGuardianOverlay() }
                     }
                 }
 
@@ -582,6 +657,9 @@ class AppScannerService : AccessibilityService() {
         event ?: return
         accessibilityEventCount++
 
+        // If a scam phrase was detected recently, warn when Google Pay is opened.
+        maybeShowScamPaymentWarning(event)
+
         // Log once every 500 events to confirm events are flowing
         if (accessibilityEventCount == 1L) {
             Log.i("WARecorder", "[Service] First accessibility event received! Event delivery is working. pkg=${event.packageName} type=${event.eventType}")
@@ -589,12 +667,24 @@ class AppScannerService : AccessibilityService() {
             Log.d("WARecorder", "[Service] Accessibility event #$accessibilityEventCount (events are flowing)")
         }
 
-        val stateChange = callDetector.processAccessibilityEvent(event) ?: return
+        val stateChange = callDetector.processAccessibilityEvent(event)
+        WhatsAppCallUiNumberProbe.tryLogFromActiveWindow(
+            this,
+            event,
+            callDetector.isInCall(),
+            callDetector.getState()
+        )
+
+        if (stateChange == null) return
 
         when (stateChange) {
             is CallStateChange.CallStarted -> {
                 cancelCallEndDebounce()
                 cancelPendingStart()
+                WhatsAppCallJourney.i(
+                    "service",
+                    "CALL_STARTED → scheduling CallRecordingService in ${RECORDING_START_DELAY_MS}ms"
+                )
                 Log.i("WARecorder", "[Service] >>> CALL STARTED — scheduling recording in ${RECORDING_START_DELAY_MS}ms (Cube ACR style)")
                 pendingStartRunnable = Runnable {
                     pendingStartRunnable = null
@@ -622,6 +712,7 @@ class AppScannerService : AccessibilityService() {
                 cancelPendingStart()  // Only matters if we hadn't started yet
                 callEndDebounceRunnable = Runnable {
                     if (callDetector.confirmCallEnded()) {
+                        WhatsAppCallJourney.i("service", "CALL_ENDED (debounced) → stop CallRecordingService")
                         Log.i("WARecorder", "[Service] <<< CALL CONFIRMED ENDED after debounce — stopping recording")
                         try {
                             val intent = Intent(this, CallRecordingService::class.java).apply {
@@ -674,6 +765,45 @@ class AppScannerService : AccessibilityService() {
                 } catch (e: Exception) {
                     Log.e("WARecorder", "[Service] FAILED to stop CallRecordingService", e)
                 }
+            }
+        }
+    }
+
+    private fun maybeShowScamPaymentWarning(event: AccessibilityEvent) {
+        val pkg = event.packageName?.toString() ?: return
+        if (pkg != GOOGLE_PAY_PACKAGE) return
+        if (!ScamAlertState.shouldWarnOnPayments(windowMs = SCAM_PAYMENT_WARNING_WINDOW_MS)) return
+        ScamAlertState.markPaymentWarningShown()
+        showPaymentScamWarningOverlay()
+    }
+
+    private fun showPaymentScamWarningOverlay() {
+        handler.post {
+            try {
+                removeCurrentOverlay()
+                val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                val root = LayoutInflater.from(this).inflate(R.layout.payment_scam_warning, null)
+                val okBtn = root.findViewById<Button>(R.id.ok_button)
+                okBtn.setOnClickListener { removeCurrentOverlay() }
+
+                val params = WindowManager.LayoutParams().apply {
+                    width = WindowManager.LayoutParams.MATCH_PARENT
+                    height = WindowManager.LayoutParams.MATCH_PARENT
+                    type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+                    } else {
+                        @Suppress("DEPRECATION")
+                        WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
+                    }
+                    flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                            WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                    format = android.graphics.PixelFormat.TRANSLUCENT
+                }
+                wm.addView(root, params)
+                currentOverlayView = root
+                Log.w(TAG, "showPaymentScamWarningOverlay: shown for Google Pay after scam detection")
+            } catch (e: Exception) {
+                Log.e(TAG, "showPaymentScamWarningOverlay failed", e)
             }
         }
     }
