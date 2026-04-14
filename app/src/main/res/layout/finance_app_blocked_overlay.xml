@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#CC000000"
+    android:background="#EE000000"
     android:padding="24dp">
 
     <LinearLayout
@@ -18,11 +18,11 @@
             android:layout_height="wrap_content"
             android:paddingHorizontal="14dp"
             android:paddingVertical="4dp"
-            android:text="@string/payment_warning_badge"
+            android:background="#FF1744"
+            android:text="@string/finance_blocked_badge"
             android:textColor="#FFFFFFFF"
             android:textSize="12sp"
-            android:textStyle="bold"
-            android:background="#FF1744" />
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/title"
@@ -30,7 +30,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:gravity="center"
-            android:text="@string/payment_warning_title"
+            android:text="@string/finance_blocked_title"
             android:textColor="#FF1744"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -41,17 +41,17 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:gravity="center"
-            android:text="@string/payment_warning_body"
+            android:text="@string/finance_blocked_message"
             android:textColor="#FFB0BAC8"
             android:textSize="13sp"
             android:lineSpacingExtra="3dp" />
 
         <Button
-            android:id="@+id/ok_button"
+            android:id="@+id/go_home_button"
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:layout_marginTop="20dp"
-            android:text="@string/payment_warning_ok"
+            android:text="@string/finance_blocked_go_home"
             android:textColor="#FFFFFFFF"
             android:textSize="15sp"
             android:textStyle="bold"
@@ -59,4 +59,3 @@
 
     </LinearLayout>
 </FrameLayout>
-

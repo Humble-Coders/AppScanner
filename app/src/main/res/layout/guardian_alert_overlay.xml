@@ -143,6 +143,18 @@
                 android:lineSpacingExtra="3dp"
                 android:visibility="gone" />
 
+            <!-- Approve finance apps (call scam + finance lock only; visibility in code) -->
+            <Button
+                android:id="@+id/finance_unlock_button"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="16dp"
+                android:text="@string/guardian_allow_finance_apps"
+                android:textColor="#FF0D0F14"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
             <!-- Call / Ignore or Call / Got it (visibility set in code) -->
             <LinearLayout
                 android:id="@+id/guardian_button_row"

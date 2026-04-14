@@ -149,7 +149,8 @@ object GuardianManager {
         riskScore: Int,
         primaryReason: String?,
         alertKind: String = GuardianAlertKind.RISKY_APP,
-        protectedUserPhone: String? = null
+        protectedUserPhone: String? = null,
+        financeLockActive: Boolean = false,
     ) {
         try {
             val body = JSONObject().apply {
@@ -161,6 +162,7 @@ object GuardianManager {
                 put("alertKind", alertKind)
                 if (primaryReason != null) put("primaryReason", primaryReason)
                 if (!protectedUserPhone.isNullOrBlank()) put("protectedUserPhone", protectedUserPhone)
+                put("financeLockActive", financeLockActive)
             }.toString()
 
             val conn = URL(CLOUD_FN_URL).openConnection() as HttpURLConnection
@@ -175,6 +177,38 @@ object GuardianManager {
             conn.disconnect()
         } catch (e: Exception) {
             Log.e(TAG, "notifyGuardians failed", e)
+        }
+    }
+
+    /**
+     * Guardian: allow the protected user to open finance apps until [durationMs] elapses.
+     * Requires Firestore rules allowing guardians to update `users/{protectedUserId}`.
+     */
+    suspend fun grantFinanceUnlockToProtectedUser(
+        protectedUserId: String,
+        durationMs: Long = 30 * 60 * 1000L,
+    ) {
+        val until = System.currentTimeMillis() + durationMs
+        db.collection("users").document(protectedUserId)
+            .update(
+                mapOf(
+                    "financeUnlockUntilMs" to until,
+                    "financeUnlockUpdatedAt" to FieldValue.serverTimestamp(),
+                )
+            ).await()
+        Log.d(TAG, "grantFinanceUnlock: until=$until for ${protectedUserId.take(8)}…")
+    }
+
+    /**
+     * Protected user: invalidate any prior finance unlock when a new scam is detected.
+     */
+    suspend fun clearFinanceUnlockAfterScam(protectedUserId: String) {
+        try {
+            db.collection("users").document(protectedUserId)
+                .update(mapOf("financeUnlockUntilMs" to 0L))
+                .await()
+        } catch (e: Exception) {
+            Log.d(TAG, "clearFinanceUnlockAfterScam: ${e.message}")
         }
     }
 }

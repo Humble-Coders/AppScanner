@@ -1,29 +1,39 @@
 package com.scanner.app
 
 /**
- * Very simple in-memory state used to show a payment warning after a scam phrase is detected.
- * No edge-case handling by design (process death clears it).
+ * In-memory state for post–scam-call finance app lock. [financeUnlockUntilMs] is also
+ * updated from Firestore when a guardian approves. Process death clears local scam time;
+ * Firestore can still carry unlock until the user reopens the app (listener syncs).
  */
 object ScamAlertState {
+
+    /** How long after a scam we enforce finance lock unless guardian approves. */
+    const val SCAM_FINANCE_PROTECTION_MS: Long = 24L * 60L * 60L * 1000L
 
     @Volatile
     private var lastScamDetectedAtMs: Long = 0L
 
     @Volatile
-    private var paymentWarningShown: Boolean = false
+    private var financeUnlockUntilMs: Long = 0L
 
     fun markScamDetected(nowMs: Long = System.currentTimeMillis()) {
         lastScamDetectedAtMs = nowMs
-        paymentWarningShown = false
+        financeUnlockUntilMs = 0L
     }
 
-    fun shouldWarnOnPayments(nowMs: Long = System.currentTimeMillis(), windowMs: Long): Boolean {
-        val t = lastScamDetectedAtMs
-        return t > 0L && !paymentWarningShown && (nowMs - t) in 0..windowMs
+    fun setFinanceUnlockUntilMs(ms: Long) {
+        financeUnlockUntilMs = ms
     }
 
-    fun markPaymentWarningShown() {
-        paymentWarningShown = true
+    /**
+     * Finance apps may open only when this returns false: i.e. no recent scam, protection
+     * window expired, or guardian approved (unlock window still valid).
+     */
+    fun shouldBlockFinanceApps(nowMs: Long = System.currentTimeMillis()): Boolean {
+        val scamAt = lastScamDetectedAtMs
+        if (scamAt <= 0L) return false
+        if (nowMs - scamAt > SCAM_FINANCE_PROTECTION_MS) return false
+        if (nowMs < financeUnlockUntilMs) return false
+        return true
     }
 }
-

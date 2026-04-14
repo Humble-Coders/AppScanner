@@ -42,6 +42,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -69,6 +70,7 @@ dependencies {
 
     // Google Cloud Speech-to-Text (REST via OkHttp)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation(libs.androidx.appcompat)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

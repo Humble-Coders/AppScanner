@@ -32,6 +32,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 
 class AppScannerService : AccessibilityService() {
 
@@ -45,10 +47,7 @@ class AppScannerService : AccessibilityService() {
          * Increased to 18s to avoid splitting recordings when user briefly switches apps. */
         private const val CALL_END_DEBOUNCE_MS = 18000L
         /** Cube ACR: delay before starting recording to let audio path stabilize. */
-        private const val RECORDING_START_DELAY_MS = 5000L
-        /** If a scam phrase was detected, warn if a payment app opens soon after. */
-        private const val SCAM_PAYMENT_WARNING_WINDOW_MS = 10 * 60 * 1000L
-        private const val GOOGLE_PAY_PACKAGE = "com.google.android.apps.nbu.paisa.user"
+        private const val RECORDING_START_DELAY_MS = 2000L
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -56,15 +55,38 @@ class AppScannerService : AccessibilityService() {
     private var knownPackages = mutableSetOf<String>()
     private var polling = false
     private var currentOverlayView: View? = null
+    /** Full-screen block when user opens a finance app after scam without guardian approval. */
+    private var financeBlockOverlayView: View? = null
+    private var financeUnlockRegistration: ListenerRegistration? = null
+    /** Non-intrusive top card showing caller details fetched from NumLookupAPI. */
+    private var callerInfoOverlayView: View? = null
+    private var callerInfoDismissRunnable: Runnable? = null
     private val callDetector = WhatsAppCallDetector()
 
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Service.onCreate")
+        // Ensure role is fresh from disk (service may start without the UI ever running)
+        PitchPhoneRoleStore.syncFromDisk(this)
         // Start collecting guardian alerts that arrive via FCM
         serviceScope.launch {
             GuardianAlertSource.alerts.collect { alert ->
                 showGuardianAlertOverlay(alert)
+            }
+        }
+        serviceScope.launch(Dispatchers.IO) {
+            try {
+                val uid = GuardianManager.getOrCreateUserId()
+                financeUnlockRegistration?.remove()
+                financeUnlockRegistration = FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(uid)
+                    .addSnapshotListener { snap, _ ->
+                        val until = snap?.getLong("financeUnlockUntilMs") ?: 0L
+                        ScamAlertState.setFinanceUnlockUntilMs(until)
+                    }
+            } catch (e: Exception) {
+                Log.e(TAG, "finance unlock listener failed", e)
             }
         }
     }
@@ -206,6 +228,7 @@ class AppScannerService : AccessibilityService() {
     private fun showWarningOverlay(appName: String, packageName: String, response: AppShieldResponse) {
         handler.post {
             try {
+                removeFinanceBlockOverlay()
                 removeCurrentOverlay()
                 val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
                 val root = LayoutInflater.from(this).inflate(R.layout.harmful_app_warning, null)
@@ -241,7 +264,7 @@ class AppScannerService : AccessibilityService() {
 
                 // Risk score
                 root.findViewById<TextView>(R.id.risk_score).text =
-                    "Risk Score: ${response.riskScore}/100"
+                    getString(R.string.risk_score_line, response.riskScore)
 
                 // Secondary flags
                 val flagsView = root.findViewById<TextView>(R.id.secondary_flags)
@@ -265,8 +288,10 @@ class AppScannerService : AccessibilityService() {
                     }
                 }
 
+                // "Call them" only makes sense on a guardian phone — never show it to a victim.
                 val harmfulCallBtn = root.findViewById<Button>(R.id.call_them_button)
-                if (response.riskLevel in listOf("MEDIUM", "HIGH", "CRITICAL")) {
+                val isGuardian = PitchPhoneRoleStore.role.value == PitchPhoneRole.GUARDIAN
+                if (isGuardian && response.riskLevel in listOf("MEDIUM", "HIGH", "CRITICAL")) {
                     harmfulCallBtn.visibility = View.VISIBLE
                     harmfulCallBtn.setOnClickListener {
                         try {
@@ -340,6 +365,8 @@ class AppScannerService : AccessibilityService() {
     private fun showGuardianAlertOverlay(alert: GuardianAlert) {
         handler.post {
             try {
+                removeFinanceBlockOverlay()
+                removeCurrentOverlay()
                 val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
                 val root = LayoutInflater.from(this).inflate(R.layout.guardian_alert_overlay, null)
 
@@ -356,6 +383,8 @@ class AppScannerService : AccessibilityService() {
                 val icon = root.findViewById<ImageView>(R.id.guardian_icon)
                 val leftBtn = root.findViewById<Button>(R.id.left_action_button)
                 val rightBtn = root.findViewById<Button>(R.id.right_action_button)
+                val financeUnlockBtn = root.findViewById<Button>(R.id.finance_unlock_button)
+                financeUnlockBtn.visibility = View.GONE
 
                 when (alert.alertKind) {
                     GuardianAlertKind.CALL_SCAM -> {
@@ -526,6 +555,28 @@ class AppScannerService : AccessibilityService() {
                     }
                 }
 
+                if (alert.alertKind == GuardianAlertKind.CALL_SCAM &&
+                    alert.financeLockActive &&
+                    alert.protectedUserUid.isNotBlank()
+                ) {
+                    financeUnlockBtn.visibility = View.VISIBLE
+                    val green = Color.parseColor("#00C853")
+                    financeUnlockBtn.backgroundTintList = ColorStateList.valueOf(green)
+                    financeUnlockBtn.setTextColor(Color.WHITE)
+                    financeUnlockBtn.setOnClickListener {
+                        serviceScope.launch(Dispatchers.IO) {
+                            try {
+                                GuardianManager.grantFinanceUnlockToProtectedUser(alert.protectedUserUid)
+                                withContext(Dispatchers.Main) {
+                                    dismissGuardianOverlay()
+                                }
+                            } catch (e: Exception) {
+                                Log.e(TAG, "grantFinanceUnlock failed", e)
+                            }
+                        }
+                    }
+                }
+
                 val params = WindowManager.LayoutParams().apply {
                     width = WindowManager.LayoutParams.MATCH_PARENT
                     height = WindowManager.LayoutParams.MATCH_PARENT
@@ -657,8 +708,8 @@ class AppScannerService : AccessibilityService() {
         event ?: return
         accessibilityEventCount++
 
-        // If a scam phrase was detected recently, warn when Google Pay is opened.
-        maybeShowScamPaymentWarning(event)
+        // After scam detection, block finance apps until guardian approves (unlock window in Firestore).
+        maybeHandleFinanceAppBlocking(event)
 
         // Log once every 500 events to confirm events are flowing
         if (accessibilityEventCount == 1L) {
@@ -681,11 +732,21 @@ class AppScannerService : AccessibilityService() {
             is CallStateChange.CallStarted -> {
                 cancelCallEndDebounce()
                 cancelPendingStart()
+                // Arm number-detection callback for caller info lookup
+                removeCallerInfoOverlay()
+                WhatsAppCallUiNumberProbe.resetForNewCall()
+                WhatsAppCallUiNumberProbe.onNumberDetected = { number ->
+                    lookupAndShowCallerInfo(number)
+                }
+                Log.i("WARecorder", "")
+                Log.i("WARecorder", "╔══════════════════════════════════════════╗")
+                Log.i("WARecorder", "║  >>> WHATSAPP CALL DETECTED              ║")
+                Log.i("WARecorder", "║  Recording starts in ${RECORDING_START_DELAY_MS}ms          ║")
+                Log.i("WARecorder", "╚══════════════════════════════════════════╝")
                 WhatsAppCallJourney.i(
                     "service",
                     "CALL_STARTED → scheduling CallRecordingService in ${RECORDING_START_DELAY_MS}ms"
                 )
-                Log.i("WARecorder", "[Service] >>> CALL STARTED — scheduling recording in ${RECORDING_START_DELAY_MS}ms (Cube ACR style)")
                 pendingStartRunnable = Runnable {
                     pendingStartRunnable = null
                     if (!callDetector.isInCall()) return@Runnable
@@ -712,8 +773,11 @@ class AppScannerService : AccessibilityService() {
                 cancelPendingStart()  // Only matters if we hadn't started yet
                 callEndDebounceRunnable = Runnable {
                     if (callDetector.confirmCallEnded()) {
+                        Log.i("WARecorder", "")
+                        Log.i("WARecorder", "╔══════════════════════════════════════════╗")
+                        Log.i("WARecorder", "║  <<< WHATSAPP CALL ENDED (debounced)     ║")
+                        Log.i("WARecorder", "╚══════════════════════════════════════════╝")
                         WhatsAppCallJourney.i("service", "CALL_ENDED (debounced) → stop CallRecordingService")
-                        Log.i("WARecorder", "[Service] <<< CALL CONFIRMED ENDED after debounce — stopping recording")
                         try {
                             val intent = Intent(this, CallRecordingService::class.java).apply {
                                 action = CallRecordingService.ACTION_STOP_RECORDING
@@ -723,6 +787,8 @@ class AppScannerService : AccessibilityService() {
                         } catch (e: Exception) {
                             Log.e("WARecorder", "[Service] FAILED to stop CallRecordingService", e)
                         }
+                        removeCallerInfoOverlay()
+                        WhatsAppCallUiNumberProbe.onNumberDetected = null
                     } else {
                         Log.d("WARecorder", "[Service] Debounce fired but call was already resumed/ended")
                     }
@@ -756,7 +822,12 @@ class AppScannerService : AccessibilityService() {
             is CallStateChange.CallEnded -> {
                 cancelPendingStart()
                 cancelCallEndDebounce()
-                Log.i("WARecorder", "[Service] <<< CALL ENDED (immediate) — stopping recording")
+                removeCallerInfoOverlay()
+                WhatsAppCallUiNumberProbe.onNumberDetected = null
+                Log.i("WARecorder", "")
+                Log.i("WARecorder", "╔══════════════════════════════════════════╗")
+                Log.i("WARecorder", "║  <<< WHATSAPP CALL ENDED (immediate)     ║")
+                Log.i("WARecorder", "╚══════════════════════════════════════════╝")
                 try {
                     val intent = Intent(this, CallRecordingService::class.java).apply {
                         action = CallRecordingService.ACTION_STOP_RECORDING
@@ -769,23 +840,49 @@ class AppScannerService : AccessibilityService() {
         }
     }
 
-    private fun maybeShowScamPaymentWarning(event: AccessibilityEvent) {
+    private fun maybeHandleFinanceAppBlocking(event: AccessibilityEvent) {
         val pkg = event.packageName?.toString() ?: return
-        if (pkg != GOOGLE_PAY_PACKAGE) return
-        if (!ScamAlertState.shouldWarnOnPayments(windowMs = SCAM_PAYMENT_WARNING_WINDOW_MS)) return
-        ScamAlertState.markPaymentWarningShown()
-        showPaymentScamWarningOverlay()
+        if (financeBlockOverlayView != null &&
+            event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
+            !FinancePackageRegistry.isFinancePackage(pkg) &&
+            pkg != packageName
+        ) {
+            removeFinanceBlockOverlay()
+        }
+        if (!FinancePackageRegistry.isFinancePackage(pkg)) return
+        if (pkg == packageName) return
+        if (!ScamAlertState.shouldBlockFinanceApps()) return
+        if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        showFinanceAppBlockedOverlay()
     }
 
-    private fun showPaymentScamWarningOverlay() {
+    private fun removeFinanceBlockOverlay() {
+        val view = financeBlockOverlayView ?: return
+        financeBlockOverlayView = null
+        try {
+            val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            wm.removeView(view)
+        } catch (e: Exception) {
+            Log.e(TAG, "removeFinanceBlockOverlay failed", e)
+        }
+    }
+
+    private fun showFinanceAppBlockedOverlay() {
+        if (financeBlockOverlayView != null) return
         handler.post {
             try {
                 removeCurrentOverlay()
                 val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                val root = LayoutInflater.from(this).inflate(R.layout.payment_scam_warning, null)
-                val okBtn = root.findViewById<Button>(R.id.ok_button)
-                okBtn.setOnClickListener { removeCurrentOverlay() }
-
+                val root = LayoutInflater.from(this).inflate(R.layout.finance_app_blocked_overlay, null)
+                root.findViewById<Button>(R.id.go_home_button).setOnClickListener {
+                    // Defer via handler so we're not calling removeView() while the
+                    // window is still dispatching the touch event (causes silent crash).
+                    // Remove overlay first, then navigate — prevents re-trigger race.
+                    handler.post {
+                        removeFinanceBlockOverlay()
+                        performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
+                    }
+                }
                 val params = WindowManager.LayoutParams().apply {
                     width = WindowManager.LayoutParams.MATCH_PARENT
                     height = WindowManager.LayoutParams.MATCH_PARENT
@@ -800,10 +897,10 @@ class AppScannerService : AccessibilityService() {
                     format = android.graphics.PixelFormat.TRANSLUCENT
                 }
                 wm.addView(root, params)
-                currentOverlayView = root
-                Log.w(TAG, "showPaymentScamWarningOverlay: shown for Google Pay after scam detection")
+                financeBlockOverlayView = root
+                Log.w(TAG, "showFinanceAppBlockedOverlay: blocking finance app after scam")
             } catch (e: Exception) {
-                Log.e(TAG, "showPaymentScamWarningOverlay failed", e)
+                Log.e(TAG, "showFinanceAppBlockedOverlay failed", e)
             }
         }
     }
@@ -829,12 +926,98 @@ class AppScannerService : AccessibilityService() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "Service.onDestroy")
+        financeUnlockRegistration?.remove()
+        financeUnlockRegistration = null
         stopPolling()
+        removeFinanceBlockOverlay()
         removeCurrentOverlay()
+        removeCallerInfoOverlay()
+        WhatsAppCallUiNumberProbe.onNumberDetected = null
         cancelPendingStart()
         cancelCallEndDebounce()
         callDetector.reset()
         serviceScope.cancel()
+    }
+
+    // ── Caller info overlay (NumLookupAPI) ────────────────────────────
+
+    /**
+     * Called on the first number detected from the WhatsApp call UI.
+     * Performs the API lookup on IO dispatcher, then shows the overlay on Main.
+     */
+    private fun lookupAndShowCallerInfo(number: String) {
+        serviceScope.launch(Dispatchers.IO) {
+            Log.d(TAG, "lookupAndShowCallerInfo: starting lookup for $number")
+            val info = NumLookupClient.lookup(number)
+            withContext(Dispatchers.Main) {
+                if (info != null && callDetector.isInCall()) {
+                    showCallerInfoOverlay(info)
+                } else {
+                    Log.d(TAG, "lookupAndShowCallerInfo: skipping overlay (info=$info inCall=${callDetector.isInCall()})")
+                }
+            }
+        }
+    }
+
+    private fun showCallerInfoOverlay(info: CallerInfo) {
+        removeCallerInfoOverlay()
+        try {
+            val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            val root = LayoutInflater.from(this).inflate(R.layout.caller_info_overlay, null)
+
+            root.findViewById<TextView>(R.id.caller_number).text =
+                info.internationalFormat.ifBlank { info.number }
+            root.findViewById<TextView>(R.id.caller_country).text =
+                info.countryName.ifBlank { getString(R.string.caller_info_unknown) }
+            root.findViewById<TextView>(R.id.caller_location).text =
+                info.location.ifBlank { getString(R.string.caller_info_unknown) }
+            root.findViewById<TextView>(R.id.caller_carrier).text =
+                info.carrier.ifBlank { getString(R.string.caller_info_unknown) }
+            root.findViewById<TextView>(R.id.caller_line_type).text =
+                info.lineType.replaceFirstChar { it.uppercase() }.ifBlank { getString(R.string.caller_info_unknown) }
+
+            root.findViewById<TextView>(R.id.caller_info_close).setOnClickListener {
+                removeCallerInfoOverlay()
+            }
+
+            val params = WindowManager.LayoutParams().apply {
+                width = WindowManager.LayoutParams.MATCH_PARENT
+                height = WindowManager.LayoutParams.WRAP_CONTENT
+                type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+                } else {
+                    @Suppress("DEPRECATION")
+                    WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
+                }
+                flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                format = android.graphics.PixelFormat.TRANSLUCENT
+                gravity = android.view.Gravity.TOP
+            }
+            wm.addView(root, params)
+            callerInfoOverlayView = root
+
+            callerInfoDismissRunnable = Runnable { removeCallerInfoOverlay() }
+            handler.postDelayed(callerInfoDismissRunnable!!, 30_000L)
+
+            Log.d(TAG, "showCallerInfoOverlay: number=${info.internationalFormat} location=${info.location} carrier=${info.carrier}")
+        } catch (e: Exception) {
+            Log.e(TAG, "showCallerInfoOverlay failed", e)
+        }
+    }
+
+    private fun removeCallerInfoOverlay() {
+        callerInfoDismissRunnable?.let { handler.removeCallbacks(it) }
+        callerInfoDismissRunnable = null
+        callerInfoOverlayView?.let { view ->
+            try {
+                val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                wm.removeView(view)
+            } catch (e: Exception) {
+                Log.e(TAG, "removeCallerInfoOverlay failed", e)
+            }
+            callerInfoOverlayView = null
+        }
     }
 
     // ── Helpers ─────────────────────────────────────────────────────

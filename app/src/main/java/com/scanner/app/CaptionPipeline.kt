@@ -21,7 +21,7 @@ class CaptionPipeline(
 
     companion object {
         private const val TAG = "WARecorder"
-        private const val BATCH_DURATION_MS = 3500L
+        private const val BATCH_DURATION_MS = 2000L
         private val BYTES_PER_SECOND = RecordingEngine.SAMPLE_RATE * 2 // 16-bit mono
     }
 

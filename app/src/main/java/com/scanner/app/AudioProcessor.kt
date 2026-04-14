@@ -1,6 +1,5 @@
 package com.scanner.app
 
-import android.media.audiofx.AcousticEchoCanceler
 import android.media.audiofx.AutomaticGainControl
 import android.media.audiofx.NoiseSuppressor
 import android.util.Log
@@ -11,25 +10,16 @@ class AudioProcessor(private val audioSessionId: Int) {
         private const val TAG = "WARecorder"
     }
 
-    private var echoCanceler: AcousticEchoCanceler? = null
     private var noiseSuppressor: NoiseSuppressor? = null
     private var gainControl: AutomaticGainControl? = null
 
     fun initialize() {
         Log.d(TAG, "[AudioFX] Initializing audio effects for sessionId=$audioSessionId")
 
-        try {
-            val aecAvailable = AcousticEchoCanceler.isAvailable()
-            Log.d(TAG, "[AudioFX] AcousticEchoCanceler available=$aecAvailable")
-            if (aecAvailable) {
-                echoCanceler = AcousticEchoCanceler.create(audioSessionId)?.also {
-                    it.enabled = true
-                    Log.d(TAG, "[AudioFX] AcousticEchoCanceler ENABLED")
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "[AudioFX] AcousticEchoCanceler creation failed", e)
-        }
+        // AEC is intentionally NOT enabled: we run in VOICE_COMMUNICATION mode with the speaker
+        // on so that the remote caller's audio leaks into the mic. AEC would cancel exactly that
+        // signal, making scam detection impossible. AGC + NS are kept to improve mic clarity.
+        Log.d(TAG, "[AudioFX] AcousticEchoCanceler SKIPPED (intentional — preserving speaker audio for scam detection)")
 
         try {
             val nsAvailable = NoiseSuppressor.isAvailable()
@@ -59,8 +49,6 @@ class AudioProcessor(private val audioSessionId: Int) {
     }
 
     fun release() {
-        echoCanceler?.release()
-        echoCanceler = null
         noiseSuppressor?.release()
         noiseSuppressor = null
         gainControl?.release()

@@ -6,8 +6,8 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,7 +40,7 @@ import kotlinx.coroutines.flow.collectLatest
 
 private const val TAG = "AppScanner"
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val notifPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -134,8 +135,8 @@ fun AppShell() {
 
     val victimPitchColor = Color(0xFFFF6D00)
     val pitchTopBarTitle = when (pitchRole) {
-        PitchPhoneRole.GUARDIAN -> "Guardian"
-        PitchPhoneRole.VICTIM -> "Victim"
+        PitchPhoneRole.GUARDIAN -> stringResource(R.string.pitch_guardian)
+        PitchPhoneRole.VICTIM -> stringResource(R.string.pitch_victim)
     }
     val pitchTopBarColor = when (pitchRole) {
         PitchPhoneRole.GUARDIAN -> guardianBlue
@@ -148,17 +149,28 @@ fun AppShell() {
             if (selectedTab == 0 || selectedTab == 1) {
                 CenterAlignedTopAppBar(
                     title = {
-                        Text(
-                            text = pitchTopBarTitle,
+                        // Solid pill so Guardian (blue) vs Victim (orange) stays visible; TopAppBar
+                        // titleContentColor would otherwise flatten the title to a single color.
+                        Surface(
+                            shape = RoundedCornerShape(24.dp),
                             color = pitchTopBarColor,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
-                        )
+                            shadowElevation = 0.dp,
+                            tonalElevation = 0.dp,
+                        ) {
+                            Text(
+                                text = pitchTopBarTitle,
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 7.dp),
+                                color = Color.White,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 15.sp,
+                                letterSpacing = 0.8.sp,
+                            )
+                        }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = cardBg,
-                        titleContentColor = Color.White
-                    )
+                        titleContentColor = pitchTopBarColor,
+                    ),
                 )
             }
         },
@@ -173,10 +185,10 @@ fun AppShell() {
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.Home,
-                            contentDescription = "Scanner"
+                            contentDescription = stringResource(R.string.cd_nav_scanner)
                         )
                     },
-                    label = { Text("Scanner", fontSize = 11.sp) },
+                    label = { Text(stringResource(R.string.nav_scanner), fontSize = 11.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = accent,
                         selectedTextColor = accent,
@@ -191,10 +203,10 @@ fun AppShell() {
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.Person,
-                            contentDescription = "Guardian"
+                            contentDescription = stringResource(R.string.cd_nav_guardian)
                         )
                     },
-                    label = { Text("Guardian", fontSize = 11.sp) },
+                    label = { Text(stringResource(R.string.nav_guardian), fontSize = 11.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = guardianBlue,
                         selectedTextColor = guardianBlue,
@@ -209,10 +221,10 @@ fun AppShell() {
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.Phone,
-                            contentDescription = "WhatsApp"
+                            contentDescription = stringResource(R.string.cd_nav_whatsapp)
                         )
                     },
-                    label = { Text("WhatsApp", fontSize = 11.sp) },
+                    label = { Text(stringResource(R.string.nav_whatsapp), fontSize = 11.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = whatsappOrange,
                         selectedTextColor = whatsappOrange,
@@ -243,6 +255,8 @@ fun AppShell() {
 fun ScannerScreen() {
     val context = LocalContext.current
     var isActive by remember { mutableStateOf(isAccessibilityEnabled(context)) }
+    var currentLocaleTag by remember { mutableStateOf(AppLocaleStore.getStoredTag(context)) }
+    var languageMenuExpanded by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val recentInstalls = remember { mutableStateListOf<InstallEvent>() }
 
@@ -252,6 +266,7 @@ fun ScannerScreen() {
             if (event == Lifecycle.Event.ON_RESUME) {
                 val prev = isActive
                 isActive = isAccessibilityEnabled(context)
+                currentLocaleTag = AppLocaleStore.getStoredTag(context)
                 Log.d(TAG, "ON_RESUME: isActive=$isActive (was $prev)")
             }
         }
@@ -267,7 +282,7 @@ fun ScannerScreen() {
                 recentInstalls.add(0, event)
             }
             snackbarHostState.showSnackbar(
-                message = "${event.appName} was just installed",
+                message = context.getString(R.string.snackbar_app_installed, event.appName),
                 withDismissAction = true,
                 duration = SnackbarDuration.Short
             )
@@ -288,11 +303,67 @@ fun ScannerScreen() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(cardBg)
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.language_section_title),
+                        color = accent,
+                        fontSize = 10.sp,
+                        letterSpacing = 2.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(
+                            onClick = { languageMenuExpanded = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = accent
+                            )
+                        ) {
+                            Text(
+                                text = "${stringResource(R.string.language_section_subtitle)}: ${languageDisplayName(currentLocaleTag)}",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = languageMenuExpanded,
+                            onDismissRequest = { languageMenuExpanded = false },
+                            modifier = Modifier.background(cardBg)
+                        ) {
+                            AppLocaleStore.supportedTags.forEach { tag ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            languageDisplayName(tag),
+                                            color = Color.White
+                                        )
+                                    },
+                                    onClick = {
+                                        AppLocaleStore.setLocale(context, tag)
+                                        currentLocaleTag = tag
+                                        languageMenuExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
 
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     Text(
-                        text = "APP SCANNER",
+                        text = stringResource(R.string.scanner_title),
                         color = accent,
                         fontSize = 11.sp,
                         letterSpacing = 3.sp,
@@ -331,7 +402,7 @@ fun ScannerScreen() {
 
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     Text(
-                        text = if (isActive) "Scanner Active" else "Scanner Inactive",
+                        text = if (isActive) stringResource(R.string.scanner_active) else stringResource(R.string.scanner_inactive),
                         color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
@@ -343,9 +414,9 @@ fun ScannerScreen() {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     Text(
                         text = if (isActive)
-                            "Monitoring all app installs.\nYou can close this app — it still works."
+                            stringResource(R.string.scanner_active_desc)
                         else
-                            "Enable the accessibility service\nto start monitoring installs.",
+                            stringResource(R.string.scanner_inactive_desc),
                         color = textSecondary,
                         fontSize = 14.sp,
                         lineHeight = 22.sp,
@@ -359,7 +430,7 @@ fun ScannerScreen() {
             if (recentInstalls.isNotEmpty()) {
                 item {
                     Text(
-                        text = "RECENTLY INSTALLED",
+                        text = stringResource(R.string.recently_installed),
                         color = accent,
                         fontSize = 10.sp,
                         letterSpacing = 2.sp,
@@ -441,18 +512,18 @@ fun ScannerScreen() {
                             .padding(20.dp)
                     ) {
                         Text(
-                            text = "HOW TO ENABLE",
+                            text = stringResource(R.string.how_to_enable),
                             color = accent,
                             fontSize = 10.sp,
                             letterSpacing = 2.sp
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         listOf(
-                            "Tap the button below",
-                            "Find AppScanner in the list",
-                            "Toggle it ON",
-                            "Close this app — scanner keeps running",
-                            "Install any app to trigger a notification"
+                            stringResource(R.string.scanner_step_1),
+                            stringResource(R.string.scanner_step_2),
+                            stringResource(R.string.scanner_step_3),
+                            stringResource(R.string.scanner_step_4),
+                            stringResource(R.string.scanner_step_5),
                         ).forEachIndexed { i, step ->
                             Text(
                                 text = "${i + 1}.  $step",
@@ -481,7 +552,7 @@ fun ScannerScreen() {
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = if (isActive) "Open Accessibility Settings" else "Enable Scanner",
+                        text = if (isActive) stringResource(R.string.open_accessibility_settings) else stringResource(R.string.enable_scanner),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
@@ -502,4 +573,15 @@ fun ScannerScreen() {
             )
         }
     }
+}
+
+@Composable
+private fun languageDisplayName(tag: String): String = when (tag) {
+    AppLocaleStore.LANG_EN -> stringResource(R.string.lang_en)
+    AppLocaleStore.LANG_HI -> stringResource(R.string.lang_hi)
+    AppLocaleStore.LANG_PA -> stringResource(R.string.lang_pa)
+    AppLocaleStore.LANG_TA -> stringResource(R.string.lang_ta)
+    AppLocaleStore.LANG_TE -> stringResource(R.string.lang_te)
+    AppLocaleStore.LANG_KN -> stringResource(R.string.lang_kn)
+    else -> stringResource(R.string.lang_en)
 }

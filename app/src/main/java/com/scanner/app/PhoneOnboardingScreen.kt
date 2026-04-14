@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -41,7 +42,7 @@ fun PhoneOnboardingScreen(onFinished: () -> Unit) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "GET STARTED",
+            text = stringResource(R.string.onboarding_title),
             color = accent,
             fontSize = 11.sp,
             letterSpacing = 3.sp,
@@ -49,7 +50,7 @@ fun PhoneOnboardingScreen(onFinished: () -> Unit) {
         )
         Spacer(Modifier.height(12.dp))
         Text(
-            text = "Enter your name and mobile number.\nNo OTP — this is only used for linking guardians.",
+            text = stringResource(R.string.onboarding_subtitle),
             color = textSecondary,
             fontSize = 14.sp,
             lineHeight = 22.sp,
@@ -67,8 +68,8 @@ fun PhoneOnboardingScreen(onFinished: () -> Unit) {
                 value = name,
                 onValueChange = { name = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Name") },
-                placeholder = { Text("e.g. Rahul") },
+                label = { Text(stringResource(R.string.label_name)) },
+                placeholder = { Text(stringResource(R.string.placeholder_name)) },
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = accent,
@@ -84,8 +85,8 @@ fun PhoneOnboardingScreen(onFinished: () -> Unit) {
                 value = phone,
                 onValueChange = { phone = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Mobile number") },
-                placeholder = { Text("e.g. 9876543210") },
+                label = { Text(stringResource(R.string.label_mobile)) },
+                placeholder = { Text(stringResource(R.string.placeholder_mobile)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -137,7 +138,7 @@ fun PhoneOnboardingScreen(onFinished: () -> Unit) {
                     strokeWidth = 2.dp
                 )
             } else {
-                Text("Continue", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(stringResource(R.string.continue_button), fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
     }

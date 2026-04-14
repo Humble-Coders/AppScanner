@@ -20,7 +20,9 @@ data class GuardianAlert(
     val primaryReason: String?,
     val protectedUserUid: String,
     /** Digits-only phone for call scam/safety alerts so the guardian can dial the protected user. */
-    val protectedUserPhone: String?
+    val protectedUserPhone: String?,
+    /** When true (call scam), guardian can approve temporary access to finance apps on the protected device. */
+    val financeLockActive: Boolean = false,
 )
 
 object GuardianAlertSource {

@@ -16,9 +16,10 @@ import java.io.File
 import java.io.FileOutputStream
 
 enum class RecordingStrategy {
-    /** Cube ACR primary: voice recognition (software) - Android 10-14, no speaker change. */
+    /** Primary: mic + in-call audio path. Works reliably on all devices. */
     VOICE_RECOGNITION,
-    /** Cube ACR fallback: voice communication with speaker. */
+    /** Fallback: forces speakerphone so remote audio leaks into mic.
+     *  Only useful if VOICE_RECOGNITION fails to initialize. */
     VOICE_COMMUNICATION
 }
 
@@ -26,7 +27,8 @@ class RecordingEngine(private val context: Context) {
 
     companion object {
         private const val TAG = "WARecorder"
-        const val SAMPLE_RATE = 44100
+        /** 16 kHz is Google Cloud STT's recommended rate for telephony — 2.75× less data than 44.1 kHz. */
+        const val SAMPLE_RATE = 16000
         const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
     }
@@ -93,17 +95,17 @@ class RecordingEngine(private val context: Context) {
         wasSpeakerOn = audioManager.isSpeakerphoneOn
         audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
         when (strategy) {
-            RecordingStrategy.VOICE_RECOGNITION -> {
-                Log.d(TAG, "[Engine] VOICE_RECOGNITION: force in-communication, speaker unchanged")
-            }
             RecordingStrategy.VOICE_COMMUNICATION -> {
                 audioManager.isSpeakerphoneOn = true
-                Log.d(TAG, "[Engine] VOICE_COMMUNICATION: force in-communication + speakerOn=true")
+                Log.d(TAG, "[Engine] VOICE_COMMUNICATION: force in-communication + speakerOn=true (captures remote voice via speaker leak)")
+            }
+            RecordingStrategy.VOICE_RECOGNITION -> {
+                Log.d(TAG, "[Engine] VOICE_RECOGNITION: force in-communication, speaker unchanged (fallback)")
             }
         }
         val audioSource = when (strategy) {
-            RecordingStrategy.VOICE_RECOGNITION -> MediaRecorder.AudioSource.VOICE_RECOGNITION
             RecordingStrategy.VOICE_COMMUNICATION -> MediaRecorder.AudioSource.VOICE_COMMUNICATION
+            RecordingStrategy.VOICE_RECOGNITION -> MediaRecorder.AudioSource.VOICE_RECOGNITION
         }
 
         return try {
@@ -132,10 +134,11 @@ class RecordingEngine(private val context: Context) {
 
             audioRecord = record
 
-            // Skip AudioProcessor for VOICE_RECOGNITION — Cube ACR uses it without AEC/AGC/NS,
-            // which can interfere with shared mic. Only use for VOICE_COMMUNICATION fallback.
+            // AudioProcessor applies AGC/NS only (AEC is intentionally disabled in AudioProcessor
+            // so the speaker audio captured by the mic is NOT cancelled out — that's the signal
+            // we need to detect the scammer's voice).
             if (strategy == RecordingStrategy.VOICE_COMMUNICATION) {
-                Log.d(TAG, "[Engine] Setting up AudioProcessor for sessionId=${record.audioSessionId}")
+                Log.d(TAG, "[Engine] Setting up AudioProcessor (no AEC) for sessionId=${record.audioSessionId}")
                 audioProcessor = AudioProcessor(record.audioSessionId)
                 audioProcessor?.initialize()
             }
@@ -169,6 +172,7 @@ class RecordingEngine(private val context: Context) {
                 outputStream = FileOutputStream(pcmFile, true)
                 val byteBuffer = ByteArray(bufferSize * 2)
                 var loopCount = 0L
+                var silentBufferCount = 0L
 
                 while (isActive && isRecording) {
                     val readCount = record.read(buffer, 0, buffer.size)
@@ -185,16 +189,23 @@ class RecordingEngine(private val context: Context) {
                         totalBytesWritten += readCount * 2
                         onPcmChunk?.invoke(byteBuffer.copyOf(readCount * 2))
 
-                        // Log progress periodically (every ~2 seconds at 44100Hz)
+                        // Silence detection: count zero samples
+                        var nonZero = 0
+                        for (i in 0 until readCount) { if (buffer[i] != 0.toShort()) nonZero++ }
+                        if (nonZero == 0) silentBufferCount++
+
                         if (loopCount == 1L) {
-                            Log.i(TAG, "[Engine] First audio data read! readCount=$readCount strategy=$currentStrategy")
+                            Log.i(TAG, "[Engine] >>> First audio data read! readCount=$readCount nonZeroSamples=$nonZero strategy=$currentStrategy")
                         }
-                        if (loopCount % 100 == 0L) {
+                        // Every ~2 seconds at 16kHz, log audio health
+                        if (loopCount % 50 == 0L) {
                             val durationSec = totalBytesWritten / (SAMPLE_RATE * 2.0)
-                            Log.d(TAG, "[Engine] Recording progress: reads=$totalReads bytes=$totalBytesWritten (~${String.format("%.1f", durationSec)}s) strategy=$currentStrategy")
+                            val silencePct = silentBufferCount * 100 / loopCount
+                            val audioStatus = if (silencePct > 90) "⚠️ MOSTLY SILENT — speaker may not be routing to mic" else "✓ audio signal present"
+                            Log.i(TAG, "[Engine] Audio health: ~${String.format("%.1f", durationSec)}s recorded | silentBuffers=$silencePct% | strategy=$currentStrategy | $audioStatus")
                         }
                     } else if (readCount < 0) {
-                        Log.e(TAG, "[Engine] AudioRecord.read() returned error: $readCount")
+                        Log.e(TAG, "[Engine] AudioRecord.read() returned error: $readCount (${if (readCount == AudioRecord.ERROR_INVALID_OPERATION) "ERROR_INVALID_OPERATION" else "ERROR"})")
                     }
                 }
                 Log.d(TAG, "[Engine] Recording loop ended: isActive=$isActive isRecording=$isRecording totalReads=$totalReads totalBytes=$totalBytesWritten")

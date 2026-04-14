@@ -35,6 +35,42 @@ class CallRecordingService : Service() {
         const val CHANNEL_ID = "call_recording_channel"
         private const val NOTIFICATION_ID = 3000
         private const val RECORDINGS_DIR = "WhatsAppRecordings"
+
+        /** Letters may be split by spaces/punctuation (STT), e.g. "digital arrest" vs "digital-arrest". */
+        private fun flexibleAdjacentWords(vararg words: String): Regex {
+            val combined = words.joinToString("") { it.lowercase() }
+            val pattern = combined.map { Regex.escape(it.toString()) }.joinToString("\\W*")
+            return Regex(pattern, RegexOption.IGNORE_CASE)
+        }
+
+        private val SCAM_PHRASE_PATTERNS = listOf(
+            // Multi-word phrases (flexible: tolerates STT punctuation/spaces between words)
+            flexibleAdjacentWords("digital", "arrest"),
+            flexibleAdjacentWords("account", "block"),
+            flexibleAdjacentWords("share", "otp"),
+            flexibleAdjacentWords("share", "the", "otp"),
+            flexibleAdjacentWords("income", "tax"),
+            flexibleAdjacentWords("send", "money"),
+            flexibleAdjacentWords("courier", "drug"),
+            flexibleAdjacentWords("drug", "parcel"),
+            // Standalone high-risk words — each is a strong individual scam signal
+            Regex("\\bdigital\\b", RegexOption.IGNORE_CASE),
+            Regex("\\barrest\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bCBI\\b"),
+            Regex("\\bnarcotics\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bED\\b"),
+            Regex("\\baadhar\\s*block\\b", RegexOption.IGNORE_CASE),
+            Regex("\\bfreeze\\b", RegexOption.IGNORE_CASE),
+        )
+
+        /** Returns the first matching scam phrase text, or null if none found. */
+        fun firstScamMatch(text: String): String? {
+            for (pattern in SCAM_PHRASE_PATTERNS) {
+                val m = pattern.find(text)
+                if (m != null) return m.value
+            }
+            return null
+        }
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -42,6 +78,8 @@ class CallRecordingService : Service() {
     private var recordingEngine: RecordingEngine? = null
     private var captionPipeline: CaptionPipeline? = null
     private var scamWarningOverlayView: View? = null
+    /** Small "AppShield AI is protecting this call" badge shown while STT pipeline is active. */
+    private var protectionBadgeView: View? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var isRecordingActive = false
     private var hasRaisedScamAlertForCall = false
@@ -73,6 +111,11 @@ class CallRecordingService : Service() {
         hasRaisedScamAlertForCall = false
         hasRaisedSafetyAlertForCall = false
 
+        Log.i(TAG, "")
+        Log.i(TAG, "┌─────────────────────────────────────────┐")
+        Log.i(TAG, "│  >>> WHATSAPP CALL STARTED               │")
+        Log.i(TAG, "│  Scam phrase detection: ACTIVE           │")
+        Log.i(TAG, "└─────────────────────────────────────────┘")
         Log.i(TAG, "[RecService] startRecording() — beginning setup")
 
         // Start foreground immediately
@@ -105,6 +148,7 @@ class CallRecordingService : Service() {
             engine.onPcmChunk = { pcm -> pipeline.feedPcm(pcm) }
             pipeline.start()
             Log.i(TAG, "[RecService] Caption pipeline started (scam phrase detection enabled)")
+            showProtectionBadge()
         } else {
             Log.w(TAG, "[RecService] GOOGLE_CLOUD_SPEECH_API_KEY not set in gradle.properties — captions disabled")
         }
@@ -123,6 +167,11 @@ class CallRecordingService : Service() {
     }
 
     private fun stopRecording() {
+        Log.i(TAG, "")
+        Log.i(TAG, "└─────────────────────────────────────────┘")
+        Log.i(TAG, "│  <<< WHATSAPP CALL ENDED                 │")
+        Log.i(TAG, "│  Scam phrase detection: STOPPING         │")
+        Log.i(TAG, "┌─────────────────────────────────────────┘")
         Log.i(TAG, "[RecService] stopRecording() called, isRecordingActive=$isRecordingActive")
 
         if (!isRecordingActive) {
@@ -138,6 +187,7 @@ class CallRecordingService : Service() {
         captionPipeline = null
         recordingEngine?.onPcmChunk = null
         removeScamWarningOverlay()
+        removeProtectionBadge()
 
         updateNotification("Processing recording...")
 
@@ -228,6 +278,7 @@ class CallRecordingService : Service() {
         recordingEngine?.release()
         recordingEngine = null
         removeScamWarningOverlay()
+        removeProtectionBadge()
         releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -252,49 +303,51 @@ class CallRecordingService : Service() {
     }
 
     private fun onTranscriptReceived(transcript: String) {
-        if (containsDigitalArrest(transcript) && !hasRaisedScamAlertForCall) {
+        Log.i(TAG, "[STT] Transcript received: \"$transcript\"")
+
+        val matched = firstScamMatch(transcript)
+        if (matched != null && !hasRaisedScamAlertForCall) {
             hasRaisedScamAlertForCall = true
-            Log.w(TAG, "[RecService] Scam phrase detected in call transcript: \"$transcript\"")
+            Log.w(TAG, "")
+            Log.w(TAG, "⚠️⚠️⚠️ [SCAM WORD DETECTED] ⚠️⚠️⚠️")
+            Log.w(TAG, "  Matched phrase : \"$matched\"")
+            Log.w(TAG, "  Full transcript: \"$transcript\"")
+            Log.w(TAG, "  Action         : alerting guardian + showing overlay")
+            Log.w(TAG, "")
             ScamAlertState.markScamDetected()
             showScamWarningOverlay()
             notifyGuardiansScamAlert()
+        } else if (matched == null) {
+            Log.d(TAG, "[STT] No scam phrases found in transcript (scamAlreadyRaised=$hasRaisedScamAlertForCall)")
         }
-        if (containsHumble(transcript) && !hasRaisedSafetyAlertForCall) {
+
+        if (SafeWordStore.matchesAnySafetyWord(this, transcript) && !hasRaisedSafetyAlertForCall) {
             hasRaisedSafetyAlertForCall = true
-            Log.w(TAG, "[RecService] Safety word detected in call transcript: \"$transcript\"")
+            Log.i(TAG, "🛡 [SAFE WORD DETECTED] in transcript: \"$transcript\"")
             showGuardianContactedOverlay()
             notifyGuardiansSafetyAlert()
         }
     }
 
-    private fun containsDigitalArrest(text: String): Boolean {
-        // Match "digital arrest" in flexible forms: digital arrest, digital-arrest, digitalarrest, etc.
-        val pattern = Regex(
-            pattern = "d\\W*i\\W*g\\W*i\\W*t\\W*a\\W*l\\W*a\\W*r\\W*r\\W*e\\W*s\\W*t",
-            option = RegexOption.IGNORE_CASE
-        )
-        return pattern.containsMatchIn(text)
-    }
-
-    private fun containsHumble(text: String): Boolean {
-        return Regex("\\bhumble\\b", RegexOption.IGNORE_CASE).containsMatchIn(text)
-    }
+    private fun containsScamPhrase(text: String): Boolean = firstScamMatch(text) != null
 
     private fun notifyGuardiansScamAlert() {
         serviceScope.launch(Dispatchers.IO) {
             try {
                 val uid = GuardianManager.getOrCreateUserId()
+                GuardianManager.clearFinanceUnlockAfterScam(uid)
                 GuardianManager.notifyGuardians(
                     protectedUserId = uid,
                     appName = "WhatsApp Call",
                     packageName = "com.whatsapp",
                     riskLevel = "CRITICAL",
                     riskScore = 95,
-                    primaryReason = "Possible scam detected: phrase similar to 'digital arrest' heard during call.",
+                    primaryReason = "Possible scam detected: wording such as digital arrest, account block, share OTP, or related threat language heard during call. Finance apps are locked until you approve access.",
                     alertKind = GuardianAlertKind.CALL_SCAM,
-                    protectedUserPhone = GuardianPhoneStore.getMyNormalizedPhone(this@CallRecordingService)
+                    protectedUserPhone = GuardianPhoneStore.getMyNormalizedPhone(this@CallRecordingService),
+                    financeLockActive = true,
                 )
-                Log.i(TAG, "[RecService] Guardian alert sent for digital-arrest scam phrase")
+                Log.i(TAG, "[RecService] Guardian alert sent for call scam phrase (finance lock)")
             } catch (e: Exception) {
                 Log.e(TAG, "[RecService] Failed to send guardian scam alert", e)
             }
@@ -315,7 +368,7 @@ class CallRecordingService : Service() {
                     alertKind = GuardianAlertKind.CALL_SAFETY,
                     protectedUserPhone = GuardianPhoneStore.getMyNormalizedPhone(this@CallRecordingService)
                 )
-                Log.i(TAG, "[RecService] Guardian safety alert sent for 'humble' keyword")
+                Log.i(TAG, "[RecService] Guardian safety alert sent for safe word")
             } catch (e: Exception) {
                 Log.e(TAG, "[RecService] Failed to send guardian safety alert", e)
             }
@@ -341,9 +394,8 @@ class CallRecordingService : Service() {
                 val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
                 val root = LayoutInflater.from(this).inflate(R.layout.caption_overlay, null)
                 scamWarningOverlayView = root
-                root.findViewById<TextView>(R.id.caption_label).text = "SCAM WARNING"
-                root.findViewById<TextView>(R.id.caption_text).text =
-                    "This may be a scam (\"digital arrest\" style). Do not share OTP, money, or personal details."
+                root.findViewById<TextView>(R.id.caption_label).text = getString(R.string.scam_warning_label)
+                root.findViewById<TextView>(R.id.caption_text).text = getString(R.string.scam_warning_body)
                 val params = WindowManager.LayoutParams().apply {
                     width = WindowManager.LayoutParams.MATCH_PARENT
                     height = WindowManager.LayoutParams.MATCH_PARENT
@@ -386,8 +438,8 @@ class CallRecordingService : Service() {
                 val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
                 val root = LayoutInflater.from(this).inflate(R.layout.caption_overlay, null)
                 scamWarningOverlayView = root
-                root.findViewById<TextView>(R.id.caption_label).text = "SAFETY ALERT"
-                root.findViewById<TextView>(R.id.caption_text).text = "Guardian has been contacted."
+                root.findViewById<TextView>(R.id.caption_label).text = getString(R.string.safety_alert_label)
+                root.findViewById<TextView>(R.id.caption_text).text = getString(R.string.safety_alert_body)
                 val params = WindowManager.LayoutParams().apply {
                     width = WindowManager.LayoutParams.MATCH_PARENT
                     height = WindowManager.LayoutParams.MATCH_PARENT
@@ -407,6 +459,55 @@ class CallRecordingService : Service() {
                 Log.w(TAG, "[RecService] Safety overlay shown to user")
             } catch (e: Exception) {
                 Log.e(TAG, "[RecService] Failed to show safety overlay", e)
+            }
+        }
+    }
+
+    private fun showProtectionBadge() {
+        handler.post {
+            if (protectionBadgeView != null) return@post
+            val canOverlay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Settings.canDrawOverlays(this)
+            } else true
+            if (!canOverlay) return@post
+            try {
+                val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                val root = LayoutInflater.from(this).inflate(R.layout.protection_badge_overlay, null)
+                protectionBadgeView = root
+                val params = WindowManager.LayoutParams().apply {
+                    width = WindowManager.LayoutParams.WRAP_CONTENT
+                    height = WindowManager.LayoutParams.WRAP_CONTENT
+                    type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                    } else {
+                        @Suppress("DEPRECATION")
+                        WindowManager.LayoutParams.TYPE_PHONE
+                    }
+                    flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    format = android.graphics.PixelFormat.TRANSLUCENT
+                    gravity = android.view.Gravity.TOP or android.view.Gravity.END
+                    x = 16
+                    y = 48
+                }
+                wm.addView(root, params)
+                Log.d(TAG, "[RecService] Protection badge shown")
+            } catch (e: Exception) {
+                Log.e(TAG, "[RecService] Failed to show protection badge", e)
+            }
+        }
+    }
+
+    private fun removeProtectionBadge() {
+        handler.post {
+            protectionBadgeView?.let { view ->
+                try {
+                    val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                    wm.removeView(view)
+                } catch (_: Exception) {}
+                protectionBadgeView = null
+                Log.d(TAG, "[RecService] Protection badge removed")
             }
         }
     }
@@ -453,10 +554,10 @@ class CallRecordingService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Call Recording",
+                getString(R.string.call_recording_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Shows when a WhatsApp call is being recorded"
+                description = getString(R.string.notification_channel_call_recording_desc)
             }
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(channel)
@@ -473,7 +574,7 @@ class CallRecordingService : Service() {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
-            .setContentTitle("WhatsApp Call Recorder")
+            .setContentTitle(getString(R.string.whatsapp_call_recorder_notification_title))
             .setContentText(text)
             .setOngoing(true)
             .setContentIntent(pendingIntent)
@@ -489,6 +590,10 @@ class CallRecordingService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.i(TAG, "[RecService] onDestroy()")
+        captionPipeline?.stop()
+        captionPipeline = null
+        removeProtectionBadge()
+        removeScamWarningOverlay()
         recordingEngine?.release()
         recordingEngine = null
         releaseWakeLock()

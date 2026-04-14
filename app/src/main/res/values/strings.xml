@@ -1,6 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">App</string>
     <string name="accessibility_description">Monitors newly installed apps to detect harmful applications.</string>
+    <string name="accessibility_service_label">AppScanner</string>
+
     <string name="harmful_app_warning_title">Potentially Harmful App</string>
     <string name="harmful_app_warning_message">This app was not installed from the Play Store. It could be harmful or contain malware.</string>
     <string name="harmful_app_warning_ok">OK</string>
@@ -12,8 +15,47 @@
     <string name="risk_dismiss_understand">I Understand</string>
     <string name="risk_dismiss_keep">Keep Anyway</string>
     <string name="uninstall_now">Uninstall Now</string>
+    <string name="risk_score_line">Risk score: %1$d/100</string>
     <string name="scanning_app">Scanning %s…</string>
     <string name="app_verified_safe">%s verified as safe</string>
+
+    <!-- Navigation & pitch -->
+    <string name="nav_scanner">Scanner</string>
+    <string name="nav_guardian">Guardian</string>
+    <string name="nav_whatsapp">WhatsApp</string>
+    <string name="pitch_guardian">Guardian</string>
+    <string name="pitch_victim">Victim</string>
+    <string name="cd_nav_scanner">Scanner</string>
+    <string name="cd_nav_guardian">Guardian</string>
+    <string name="cd_nav_whatsapp">WhatsApp</string>
+
+    <!-- Language -->
+    <string name="language_section_title">Language</string>
+    <string name="language_section_subtitle">App language</string>
+    <string name="lang_en">English</string>
+    <string name="lang_hi">हिन्दी</string>
+    <string name="lang_pa">ਪੰਜਾਬੀ</string>
+    <string name="lang_ta">தமிழ்</string>
+    <string name="lang_te">తెలుగు</string>
+    <string name="lang_kn">ಕನ್ನಡ</string>
+
+    <!-- Scanner home -->
+    <string name="scanner_title">APP SCANNER</string>
+    <string name="scanner_active">Scanner Active</string>
+    <string name="scanner_inactive">Scanner Inactive</string>
+    <string name="scanner_active_desc">Monitoring all app installs.\nYou can close this app — it still works.</string>
+    <string name="scanner_inactive_desc">Enable the accessibility service\nto start monitoring installs.</string>
+    <string name="recently_installed">RECENTLY INSTALLED</string>
+    <string name="how_to_enable">HOW TO ENABLE</string>
+    <string name="open_accessibility_settings">Open Accessibility Settings</string>
+    <string name="enable_scanner">Enable Scanner</string>
+    <string name="snackbar_app_installed">%1$s was just installed</string>
+
+    <string name="scanner_step_1">Tap the button below</string>
+    <string name="scanner_step_2">Find AppScanner in the list</string>
+    <string name="scanner_step_3">Toggle it ON</string>
+    <string name="scanner_step_4">Close this app — scanner keeps running</string>
+    <string name="scanner_step_5">Install any app to trigger a notification</string>
 
     <!-- Guardian Protection -->
     <string name="guardian_alert_title">Guardian Alert</string>
@@ -36,6 +78,45 @@
     <string name="guardian_subtitle_call_safety">During a monitored call they said the agreed safe word. They may want help or a quiet check-in, even if the conversation sounds normal.</string>
     <string name="guardian_details_heading">Details</string>
     <string name="guardian_detail_fallback">No extra details were sent with this alert.</string>
+    <string name="guardian_allow_finance_apps">Allow finance apps (30 min)</string>
+
+    <string name="guardian_screen_title">GUARDIAN PROTECTION</string>
+    <string name="guardian_screen_subtitle">Share your QR or your phone number so someone\ncan receive alerts for you</string>
+    <string name="guardian_name_fmt">Name: %1$s</string>
+    <string name="guardian_your_number_fmt">Your number: %1$s</string>
+    <string name="your_qr_title">YOUR QR CODE</string>
+    <string name="your_qr_hint">Let your guardian scan this</string>
+    <string name="cd_guardian_qr">Your Guardian QR Code</string>
+    <string name="add_guardian_phone_title">ADD GUARDIAN BY PHONE</string>
+    <string name="add_guardian_phone_body">Enter your guardian’s mobile number (same digits they entered at signup).\nThey will get your risk alerts.</string>
+    <string name="guardian_number_label">Guardian’s number</string>
+    <string name="add_guardian_button">Add guardian</string>
+    <string name="guardian_linked_named">%1$s is now your guardian and will get your alerts.</string>
+    <string name="guardian_linked_anon">This person is now your guardian and will get your alerts.</string>
+    <string name="guardian_link_failed">Could not link</string>
+    <string name="become_guardian_title">BECOME A GUARDIAN</string>
+    <string name="become_guardian_body">Scan someone\'s QR code to protect them\nand receive their risk alerts</string>
+    <string name="guardian_link_active">Guardian link active</string>
+    <string name="scan_qr_code">Scan QR Code</string>
+    <string name="scan_another_qr">Scan Another QR Code</string>
+    <string name="scan_qr_prompt">Scan the QR code of the person you want to protect</string>
+    <string name="guardian_how_title">HOW IT WORKS</string>
+    <string name="guardian_how_1">You enter your phone once at startup (not verified)</string>
+    <string name="guardian_how_2">Share your QR or phone number with someone you trust</string>
+    <string name="guardian_how_3">They scan your QR or enter your number under Add guardian by phone</string>
+    <string name="guardian_how_4">When you install a risky app or a call trigger fires, they get alerted</string>
+    <string name="guardian_how_5">You can scan someone else\'s QR to be their guardian too</string>
+    <string name="pitch_dialog_title">Pitch device label</string>
+    <string name="pitch_dialog_body">Shown in the top bar on Scanner and Guardian tabs.</string>
+    <string name="pitch_option_guardian">Guardian phone</string>
+    <string name="pitch_option_victim">Victim phone</string>
+    <string name="close">Close</string>
+    <string name="cd_pitch_debug">Pitch: set guardian or victim label</string>
+
+    <string name="finance_blocked_badge">FINANCE APPS LOCKED</string>
+    <string name="finance_blocked_title">Opening blocked</string>
+    <string name="finance_blocked_message">A possible scam was detected on a recent call. Finance and payment apps stay locked until your guardian approves access in their alert. You can use the rest of your phone.</string>
+    <string name="finance_blocked_go_home">Go to home</string>
 
     <string name="overlay_permission_title">DISPLAY OVER OTHER APPS</string>
     <string name="overlay_permission_body">Allow this app to draw on top of other apps so guardian alerts, scam warnings, and risk overlays can appear when something important happens.</string>
@@ -45,15 +126,67 @@
 
     <!-- WhatsApp Call Recorder -->
     <string name="whatsapp_recorder_title">WHATSAPP RECORDER</string>
-    <string name="recording_active">Recording Active</string>
-    <string name="recording_idle">Recorder Ready</string>
-    <string name="recording_idle_description">WhatsApp calls will be recorded automatically\nwhen the accessibility service is active.</string>
-    <string name="recording_active_description">Currently recording a WhatsApp call…</string>
-    <string name="no_recordings">No recordings yet</string>
-    <string name="no_recordings_description">Your WhatsApp call recordings will appear here.</string>
+    <string name="recorder_ready">Recorder Ready</string>
+    <string name="recorder_inactive">Recorder Inactive</string>
+    <string name="recorder_ready_desc">WhatsApp calls will be recorded automatically.\nYou can close this app — it still works.</string>
+    <string name="recorder_inactive_accessibility">Enable the accessibility service\nto start recording calls.</string>
+    <string name="recorder_inactive_mic">Microphone permission is required\nto record WhatsApp calls.</string>
     <string name="grant_audio_permission">Grant Audio Permission</string>
-    <string name="audio_permission_needed">Microphone permission is required\nto record WhatsApp calls.</string>
+    <string name="enable_accessibility_service">Enable Accessibility Service</string>
+    <string name="recordings_header">RECORDINGS</string>
+    <string name="no_recordings">No recordings yet</string>
+    <string name="no_recordings_desc">Your WhatsApp call recordings\nwill appear here.</string>
+    <string name="whatsapp_how_title">HOW IT WORKS</string>
+    <string name="whatsapp_how_1">Enable the accessibility service</string>
+    <string name="whatsapp_how_2">Grant microphone permission</string>
+    <string name="whatsapp_how_3">Make or receive a WhatsApp call</string>
+    <string name="whatsapp_how_4">Recording starts automatically</string>
+    <string name="whatsapp_how_5">Find your recordings here when the call ends</string>
+    <string name="safety_words_title">SAFETY WORDS</string>
+    <string name="safety_words_body">Say any of these during a WhatsApp call to alert your guardian. \"%1$s\" is always active, even if you add more words.</string>
+    <string name="always_on">Always on</string>
+    <string name="safe_word_placeholder">Add a word or short phrase</string>
+    <string name="cd_remove_word">Remove</string>
+    <string name="cd_add_word">Add</string>
+    <string name="cd_play">Play</string>
+    <string name="cd_pause">Pause</string>
+    <string name="cd_delete_recording">Delete</string>
     <string name="recording_notification_title">Recording WhatsApp call</string>
     <string name="recording_notification_text">Tap to open the app</string>
     <string name="call_recording_channel_name">Call Recording</string>
+    <string name="notification_channel_call_recording_desc">Shows when a WhatsApp call is being recorded</string>
+    <string name="whatsapp_call_recorder_notification_title">WhatsApp Call Recorder</string>
+
+    <!-- Phone onboarding -->
+    <string name="onboarding_title">GET STARTED</string>
+    <string name="onboarding_subtitle">Enter your name and mobile number.\nNo OTP — this is only used for linking guardians.</string>
+    <string name="label_name">Name</string>
+    <string name="placeholder_name">e.g. Rahul</string>
+    <string name="label_mobile">Mobile number</string>
+    <string name="placeholder_mobile">e.g. 9876543210</string>
+    <string name="continue_button">Continue</string>
+
+    <!-- Call overlays (services) -->
+    <string name="caption_live_label">LIVE CAPTIONS</string>
+    <string name="scam_warning_label">SCAM WARNING</string>
+    <string name="scam_warning_body">This may be a scam (e.g. digital arrest, account block, or requests to share OTP). Do not share OTP, money, or personal details.</string>
+    <string name="safety_alert_label">SAFETY ALERT</string>
+    <string name="safety_alert_body">Guardian has been contacted.</string>
+
+    <!-- Protection badge (shown during active scam-detection recording) -->
+    <string name="protection_badge_label">AppShield AI · Protecting</string>
+
+    <!-- Caller info overlay (NumLookupAPI) -->
+    <string name="caller_info_badge">CALLER INFO</string>
+    <string name="caller_info_label_country">COUNTRY</string>
+    <string name="caller_info_label_location">LOCATION</string>
+    <string name="caller_info_label_carrier">CARRIER</string>
+    <string name="caller_info_label_line_type">LINE TYPE</string>
+    <string name="caller_info_unknown">Unknown</string>
+
+    <!-- Payment / scam warning layout -->
+    <string name="payment_warning_badge">PAYMENT WARNING</string>
+    <string name="payment_warning_title">You may be under a scam</string>
+    <string name="payment_warning_body">Do NOT send money. Do NOT share OTP, UPI PIN, bank details, or screenshots. End the call and contact a trusted person.</string>
+    <string name="payment_warning_ok">I Understand</string>
 </resources>

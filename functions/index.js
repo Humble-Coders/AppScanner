@@ -21,6 +21,7 @@ initializeApp();
  *   primaryReason  – (optional) human-readable risk reason
  *   alertKind      – (optional) RISKY_APP | CALL_SCAM | CALL_SAFETY (default RISKY_APP)
  *   protectedUserPhone – (optional) digits for guardian “Call them” on call alerts
+ *   financeLockActive – (optional) boolean; when true, guardian can approve finance app access
  */
 exports.notifyGuardians = onRequest(
   { cors: true, timeoutSeconds: 30 },
@@ -38,6 +39,7 @@ exports.notifyGuardians = onRequest(
       primaryReason,
       alertKind,
       protectedUserPhone,
+      financeLockActive,
     } = req.body;
 
     if (!userId || !appName || !packageName || !riskLevel) {
@@ -81,6 +83,7 @@ exports.notifyGuardians = onRequest(
         riskScore: String(riskScore ?? 0),
         primaryReason: primaryReason ?? "",
         protectedUserPhone: protectedUserPhone ?? "",
+        financeLockActive: financeLockActive === true ? "true" : "false",
       },
       // High priority ensures delivery even when the device is idle
       android: {

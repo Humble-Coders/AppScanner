@@ -21,7 +21,8 @@ class SpeechToTextClient(private val apiKey: String) {
     companion object {
         private const val TAG = "WARecorder"
         private const val BASE_URL = "https://speech.googleapis.com/v1/speech:recognize"
-        private const val SAMPLE_RATE = 44100
+        /** Must match RecordingEngine.SAMPLE_RATE exactly. */
+        private val SAMPLE_RATE = RecordingEngine.SAMPLE_RATE
         private val JSON = "application/json; charset=utf-8".toMediaType()
         /** HTTP codes that are worth retrying (transient/rate-limit). */
         private val RETRYABLE_CODES = setOf(429, 500, 502, 503)
@@ -54,6 +55,7 @@ class SpeechToTextClient(private val apiKey: String) {
                     put("encoding", "LINEAR16")
                     put("sampleRateHertz", SAMPLE_RATE)
                     put("languageCode", "en-US")
+                    put("maxAlternatives", 3)
                 })
                 put("audio", JSONObject().apply {
                     put("content", base64)
@@ -88,17 +90,30 @@ class SpeechToTextClient(private val apiKey: String) {
             val results = result.optJSONArray("results") ?: return@withContext null
             if (results.length() == 0) return@withContext null
 
-            val first = results.getJSONObject(0)
-            val alternatives = first.optJSONArray("alternatives") ?: return@withContext null
-            if (alternatives.length() == 0) return@withContext null
-
-            val transcript = alternatives.getJSONObject(0).optString("transcript", "")
-            if (transcript.isNotBlank()) {
-                Log.i(TAG, "[SpeechToText] Transcript: \"$transcript\"")
-            } else {
-                Log.d(TAG, "[SpeechToText] No transcript in alternatives (possible silence)")
+            // Collect top-3 alternatives from every result segment into one combined string.
+            // Scam phrases are matched against the combined text so near-miss transcriptions
+            // from lower-confidence alternatives are also checked.
+            val sb = StringBuilder()
+            for (i in 0 until results.length()) {
+                val resultObj = results.getJSONObject(i)
+                val alternatives = resultObj.optJSONArray("alternatives") ?: continue
+                val altCount = minOf(alternatives.length(), 3)
+                for (j in 0 until altCount) {
+                    val t = alternatives.getJSONObject(j).optString("transcript", "")
+                    if (t.isNotBlank()) {
+                        if (sb.isNotEmpty()) sb.append(" | ")
+                        sb.append(t.trim())
+                    }
+                }
             }
-            transcript.takeIf { it.isNotBlank() }
+
+            val combined = sb.toString()
+            if (combined.isBlank()) {
+                Log.d(TAG, "[SpeechToText] No transcript in any alternative (possible silence)")
+                return@withContext null
+            }
+            Log.i(TAG, "[SpeechToText] Transcripts (${results.length()} segments): \"$combined\"")
+            combined
         } catch (e: Exception) {
             Log.e(TAG, "[SpeechToText] Recognition failed: ${e.message}", e)
             null

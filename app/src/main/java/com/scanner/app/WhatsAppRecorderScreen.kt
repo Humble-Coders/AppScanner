@@ -11,8 +11,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
@@ -22,7 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -66,6 +72,11 @@ fun WhatsAppRecorderScreen() {
 
     val isActive = remember { mutableStateOf(isAccessibilityEnabled(context)) }
 
+    var customSafeWords by remember {
+        mutableStateOf(SafeWordStore.getCustomSafeWords(context))
+    }
+    var draftSafeWord by remember { mutableStateOf("") }
+
     // Load existing recordings on launch
     LaunchedEffect(Unit) {
         val dir = File(context.getExternalFilesDir(null), "WhatsAppRecordings")
@@ -98,12 +109,21 @@ fun WhatsAppRecorderScreen() {
                 hasAudioPermission = ContextCompat.checkSelfPermission(
                     context, Manifest.permission.RECORD_AUDIO
                 ) == PackageManager.PERMISSION_GRANTED
+                customSafeWords = SafeWordStore.getCustomSafeWords(context)
             }
         }
         lifecycle.addObserver(observer)
         onDispose {
             lifecycle.removeObserver(observer)
             playbackManager.release()
+        }
+    }
+
+    fun tryAddSafeWord() {
+        val ok = SafeWordStore.addCustomSafeWord(context, draftSafeWord)
+        if (ok) {
+            draftSafeWord = ""
+            customSafeWords = SafeWordStore.getCustomSafeWords(context)
         }
     }
 
@@ -118,7 +138,7 @@ fun WhatsAppRecorderScreen() {
         item {
             Spacer(Modifier.height(48.dp))
             Text(
-                text = "WHATSAPP RECORDER",
+                text = stringResource(R.string.whatsapp_recorder_title),
                 color = whatsappOrange,
                 fontSize = 11.sp,
                 letterSpacing = 3.sp,
@@ -169,8 +189,8 @@ fun WhatsAppRecorderScreen() {
             Spacer(Modifier.height(24.dp))
 
             Text(
-                text = if (isActive.value && hasAudioPermission) "Recorder Ready"
-                else "Recorder Inactive",
+                text = if (isActive.value && hasAudioPermission) stringResource(R.string.recorder_ready)
+                else stringResource(R.string.recorder_inactive),
                 color = Color.White,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
@@ -182,11 +202,11 @@ fun WhatsAppRecorderScreen() {
 
             Text(
                 text = if (isActive.value && hasAudioPermission)
-                    "WhatsApp calls will be recorded automatically.\nYou can close this app — it still works."
+                    stringResource(R.string.recorder_ready_desc)
                 else if (!hasAudioPermission)
-                    "Microphone permission is required\nto record WhatsApp calls."
+                    stringResource(R.string.recorder_inactive_mic)
                 else
-                    "Enable the accessibility service\nto start recording calls.",
+                    stringResource(R.string.recorder_inactive_accessibility),
                 color = textSecondary,
                 fontSize = 14.sp,
                 lineHeight = 22.sp,
@@ -214,7 +234,7 @@ fun WhatsAppRecorderScreen() {
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "Grant Audio Permission",
+                        text = stringResource(R.string.grant_audio_permission),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
@@ -242,7 +262,7 @@ fun WhatsAppRecorderScreen() {
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "Enable Accessibility Service",
+                        text = stringResource(R.string.enable_accessibility_service),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
@@ -251,11 +271,28 @@ fun WhatsAppRecorderScreen() {
             }
         }
 
+        item {
+            SafeWordsCard(
+                cardBg = cardBg,
+                whatsappOrange = whatsappOrange,
+                textSecondary = textSecondary,
+                customWords = customSafeWords,
+                draftWord = draftSafeWord,
+                onDraftChange = { draftSafeWord = it },
+                onAdd = { tryAddSafeWord() },
+                onRemove = { w ->
+                    SafeWordStore.removeCustomSafeWord(context, w)
+                    customSafeWords = SafeWordStore.getCustomSafeWords(context)
+                }
+            )
+            Spacer(Modifier.height(24.dp))
+        }
+
         // Recordings header
         if (recordings.isNotEmpty()) {
             item {
                 Text(
-                    text = "RECORDINGS",
+                    text = stringResource(R.string.recordings_header),
                     color = whatsappOrange,
                     fontSize = 10.sp,
                     letterSpacing = 2.sp,
@@ -296,14 +333,14 @@ fun WhatsAppRecorderScreen() {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "No recordings yet",
+                        text = stringResource(R.string.no_recordings),
                         color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Your WhatsApp call recordings\nwill appear here.",
+                        text = stringResource(R.string.no_recordings_desc),
                         color = textSecondary,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center,
@@ -324,18 +361,18 @@ fun WhatsAppRecorderScreen() {
                     .padding(20.dp)
             ) {
                 Text(
-                    text = "HOW IT WORKS",
+                    text = stringResource(R.string.whatsapp_how_title),
                     color = whatsappOrange,
                     fontSize = 10.sp,
                     letterSpacing = 2.sp
                 )
                 Spacer(Modifier.height(12.dp))
                 listOf(
-                    "Enable the accessibility service",
-                    "Grant microphone permission",
-                    "Make or receive a WhatsApp call",
-                    "Recording starts automatically",
-                    "Find your recordings here when the call ends"
+                    stringResource(R.string.whatsapp_how_1),
+                    stringResource(R.string.whatsapp_how_2),
+                    stringResource(R.string.whatsapp_how_3),
+                    stringResource(R.string.whatsapp_how_4),
+                    stringResource(R.string.whatsapp_how_5),
                 ).forEachIndexed { i, step ->
                     Text(
                         text = "${i + 1}.  $step",
@@ -346,6 +383,128 @@ fun WhatsAppRecorderScreen() {
                 }
             }
             Spacer(Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+private fun SafeWordsCard(
+    cardBg: Color,
+    whatsappOrange: Color,
+    textSecondary: Color,
+    customWords: List<String>,
+    draftWord: String,
+    onDraftChange: (String) -> Unit,
+    onAdd: () -> Unit,
+    onRemove: (String) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(cardBg)
+            .padding(20.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.safety_words_title),
+            color = whatsappOrange,
+            fontSize = 10.sp,
+            letterSpacing = 2.sp
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.safety_words_body, SafeWordStore.BUILT_IN_SAFE_WORD),
+            color = textSecondary,
+            fontSize = 13.sp,
+            lineHeight = 20.sp
+        )
+        Spacer(Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Lock,
+                contentDescription = null, // decorative
+                tint = whatsappOrange,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = SafeWordStore.BUILT_IN_SAFE_WORD,
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = stringResource(R.string.always_on),
+                color = textSecondary,
+                fontSize = 12.sp
+            )
+        }
+        customWords.forEach { w ->
+            Spacer(Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = w,
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = { onRemove(w) }) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = stringResource(R.string.cd_remove_word),
+                        tint = textSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = draftWord,
+                onValueChange = onDraftChange,
+                modifier = Modifier.weight(1f),
+                placeholder = { Text(stringResource(R.string.safe_word_placeholder), color = textSecondary) },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = whatsappOrange,
+                    unfocusedBorderColor = Color(0xFF3A4050),
+                    cursorColor = whatsappOrange,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { onAdd() }),
+            )
+            Spacer(Modifier.width(8.dp))
+            FilledTonalButton(
+                onClick = onAdd,
+                enabled = draftWord.trim().isNotEmpty(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = whatsappOrange.copy(alpha = 0.22f),
+                    contentColor = whatsappOrange,
+                    disabledContainerColor = Color(0xFF2A3040),
+                    disabledContentColor = textSecondary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = stringResource(R.string.cd_add_word),
+                    modifier = Modifier.size(22.dp)
+                )
+            }
         }
     }
 }
@@ -383,7 +542,7 @@ private fun RecordingCard(
             ) {
                 Icon(
                     imageVector = if (isCurrentPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = if (isCurrentPlaying) "Pause" else "Play",
+                    contentDescription = if (isCurrentPlaying) stringResource(R.string.cd_pause) else stringResource(R.string.cd_play),
                     tint = whatsappOrange,
                     modifier = Modifier.size(24.dp)
                 )
@@ -435,7 +594,7 @@ private fun RecordingCard(
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Filled.Delete,
-                    contentDescription = "Delete",
+                    contentDescription = stringResource(R.string.cd_delete_recording),
                     tint = textSecondary,
                     modifier = Modifier.size(20.dp)
                 )

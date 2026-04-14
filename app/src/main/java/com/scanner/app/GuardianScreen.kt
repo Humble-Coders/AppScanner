@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -99,7 +100,7 @@ fun GuardianScreen() {
         item {
             Spacer(Modifier.height(48.dp))
             Text(
-                text = "GUARDIAN PROTECTION",
+                text = stringResource(R.string.guardian_screen_title),
                 color = guardianBlue,
                 fontSize = 11.sp,
                 letterSpacing = 3.sp,
@@ -107,7 +108,7 @@ fun GuardianScreen() {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Share your QR or your phone number so someone\ncan receive alerts for you",
+                text = stringResource(R.string.guardian_screen_subtitle),
                 color = textSecondary,
                 fontSize = 13.sp,
                 lineHeight = 20.sp,
@@ -116,7 +117,7 @@ fun GuardianScreen() {
             GuardianPhoneStore.getMyDisplayName(context)?.let { nm ->
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "Name: $nm",
+                    text = stringResource(R.string.guardian_name_fmt, nm),
                     color = Color.White,
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center
@@ -125,7 +126,7 @@ fun GuardianScreen() {
             GuardianPhoneStore.getMyNormalizedPhone(context)?.let { num ->
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "Your number: $num",
+                    text = stringResource(R.string.guardian_your_number_fmt, num),
                     color = guardianBlue,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -146,14 +147,14 @@ fun GuardianScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "YOUR QR CODE",
+                    text = stringResource(R.string.your_qr_title),
                     color = textSecondary,
                     fontSize = 10.sp,
                     letterSpacing = 2.sp
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Let your guardian scan this",
+                    text = stringResource(R.string.your_qr_hint),
                     color = Color(0xFF3A4050),
                     fontSize = 12.sp
                 )
@@ -176,7 +177,7 @@ fun GuardianScreen() {
                     ) {
                         Image(
                             bitmap = qrBitmap!!.asImageBitmap(),
-                            contentDescription = "Your Guardian QR Code",
+                            contentDescription = stringResource(R.string.cd_guardian_qr),
                             modifier = Modifier.fillMaxSize()
                         )
                     }
@@ -206,14 +207,14 @@ fun GuardianScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "ADD GUARDIAN BY PHONE",
+                    text = stringResource(R.string.add_guardian_phone_title),
                     color = textSecondary,
                     fontSize = 10.sp,
                     letterSpacing = 2.sp
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "Enter your guardian’s mobile number (same digits they entered at signup).\nThey will get your risk alerts.",
+                    text = stringResource(R.string.add_guardian_phone_body),
                     color = textSecondary,
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
@@ -224,7 +225,7 @@ fun GuardianScreen() {
                     value = guardianPhoneInput,
                     onValueChange = { guardianPhoneInput = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Guardian’s number") },
+                    label = { Text(stringResource(R.string.guardian_number_label)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -257,14 +258,14 @@ fun GuardianScreen() {
                                     GuardianManager.linkGuardianByPhoneNumber(context, guardianPhoneInput)
                                 guardianPhoneInput = ""
                                 phoneLinkMessage = if (!guardianName.isNullOrBlank()) {
-                                    "$guardianName is now your guardian and will get your alerts."
+                                    context.getString(R.string.guardian_linked_named, guardianName)
                                 } else {
-                                    "This person is now your guardian and will get your alerts."
+                                    context.getString(R.string.guardian_linked_anon)
                                 }
                                 phoneLinkError = false
                             } catch (e: Exception) {
                                 phoneLinkError = true
-                                phoneLinkMessage = e.message ?: "Could not link"
+                                phoneLinkMessage = e.message ?: context.getString(R.string.guardian_link_failed)
                             } finally {
                                 phoneLinkBusy = false
                             }
@@ -287,7 +288,7 @@ fun GuardianScreen() {
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Add guardian", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Text(stringResource(R.string.add_guardian_button), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 }
             }
@@ -305,14 +306,14 @@ fun GuardianScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "BECOME A GUARDIAN",
+                    text = stringResource(R.string.become_guardian_title),
                     color = textSecondary,
                     fontSize = 10.sp,
                     letterSpacing = 2.sp
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "Scan someone's QR code to protect them\nand receive their risk alerts",
+                    text = stringResource(R.string.become_guardian_body),
                     color = textSecondary,
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
@@ -334,7 +335,7 @@ fun GuardianScreen() {
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "Guardian link active",
+                            text = stringResource(R.string.guardian_link_active),
                             color = accent,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
@@ -346,7 +347,7 @@ fun GuardianScreen() {
                     onClick = {
                         val options = ScanOptions().apply {
                             setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-                            setPrompt("Scan the QR code of the person you want to protect")
+                            setPrompt(context.getString(R.string.scan_qr_prompt))
                             setBeepEnabled(false)
                             setBarcodeImageEnabled(false)
                         }
@@ -363,7 +364,7 @@ fun GuardianScreen() {
                     enabled = !isLoading
                 ) {
                     Text(
-                        text = if (isGuardianLinked) "Scan Another QR Code" else "Scan QR Code",
+                        text = if (isGuardianLinked) stringResource(R.string.scan_another_qr) else stringResource(R.string.scan_qr_code),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
@@ -397,18 +398,18 @@ fun GuardianScreen() {
                     .padding(20.dp)
             ) {
                 Text(
-                    text = "HOW IT WORKS",
+                    text = stringResource(R.string.guardian_how_title),
                     color = guardianBlue,
                     fontSize = 10.sp,
                     letterSpacing = 2.sp
                 )
                 Spacer(Modifier.height(12.dp))
                 listOf(
-                    "You enter your phone once at startup (not verified)",
-                    "Share your QR or phone number with someone you trust",
-                    "They scan your QR or enter your number under Add guardian by phone",
-                    "When you install a risky app or a call trigger fires, they get alerted",
-                    "You can scan someone else's QR to be their guardian too"
+                    stringResource(R.string.guardian_how_1),
+                    stringResource(R.string.guardian_how_2),
+                    stringResource(R.string.guardian_how_3),
+                    stringResource(R.string.guardian_how_4),
+                    stringResource(R.string.guardian_how_5),
                 ).forEachIndexed { i, step ->
                     Text(
                         text = "${i + 1}.  $step",
@@ -436,7 +437,7 @@ fun GuardianScreen() {
                 ) {
                     Icon(
                         imageVector = Icons.Filled.BugReport,
-                        contentDescription = "Pitch: set guardian or victim label",
+                        contentDescription = stringResource(R.string.cd_pitch_debug),
                         tint = textSecondary.copy(alpha = 0.55f),
                         modifier = Modifier.size(22.dp)
                     )
@@ -450,11 +451,11 @@ fun GuardianScreen() {
     if (showPitchRoleDialog) {
         AlertDialog(
             onDismissRequest = { showPitchRoleDialog = false },
-            title = { Text("Pitch device label") },
+            title = { Text(stringResource(R.string.pitch_dialog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        "Shown in the top bar on Scanner and Guardian tabs.",
+                        stringResource(R.string.pitch_dialog_body),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp
                     )
@@ -480,8 +481,8 @@ fun GuardianScreen() {
                             Spacer(Modifier.width(8.dp))
                             Text(
                                 when (option) {
-                                    PitchPhoneRole.GUARDIAN -> "Guardian phone"
-                                    PitchPhoneRole.VICTIM -> "Victim phone"
+                                    PitchPhoneRole.GUARDIAN -> stringResource(R.string.pitch_option_guardian)
+                                    PitchPhoneRole.VICTIM -> stringResource(R.string.pitch_option_victim)
                                 },
                                 fontSize = 15.sp
                             )
@@ -491,7 +492,7 @@ fun GuardianScreen() {
             },
             confirmButton = {
                 TextButton(onClick = { showPitchRoleDialog = false }) {
-                    Text("Close")
+                    Text(stringResource(R.string.close))
                 }
             }
         )

@@ -50,6 +50,21 @@ object WhatsAppCallUiNumberProbe {
     private const val DEDUPE_WINDOW_MS = 8000L
     private var lastThrottleLogMs = 0L
 
+    /**
+     * Set by AppScannerService at the start of each WhatsApp call.
+     * Invoked once — the first time a phone number is successfully extracted from the call UI.
+     * The number is normalized to international format (e.g. "+919289613177").
+     * Cleared by AppScannerService when the call ends.
+     */
+    var onNumberDetected: ((String) -> Unit)? = null
+    private var callbackFired = false
+
+    /** Call this at the start of every new WhatsApp call to re-arm the callback. */
+    fun resetForNewCall() {
+        callbackFired = false
+        recentlyLogged.clear()
+    }
+
     fun tryLogFromActiveWindow(
         service: AccessibilityService,
         event: AccessibilityEvent,
@@ -148,6 +163,10 @@ object WhatsAppCallUiNumberProbe {
             loggedAny = true
             WhatsAppCallJourney.i("number", "normalized=$normalized (from raw=${raw.take(48)})")
             Log.i(TAG, "Call UI number candidate pkg=$pkg normalized=$normalized rawSnippet=${raw.take(32)}")
+            if (!callbackFired) {
+                callbackFired = true
+                onNumberDetected?.invoke(normalized)
+            }
         }
         if (!loggedAny && found.isNotEmpty()) {
             WhatsAppCallJourney.w("number", "had raw fragments but none normalized: $found")

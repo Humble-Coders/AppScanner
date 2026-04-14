@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="#CC0D1B2A"
+    android:paddingLeft="10dp"
+    android:paddingRight="12dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
+
+    <!-- Shield indicator dot -->
+    <View
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:background="#FF00E676"
+        android:layout_marginEnd="7dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/protection_badge_label"
+        android:textSize="11sp"
+        android:textColor="#FFFFFFFF"
+        android:textStyle="bold"
+        android:letterSpacing="0.04"
+        android:fontFamily="sans-serif-medium" />
+
+</LinearLayout>

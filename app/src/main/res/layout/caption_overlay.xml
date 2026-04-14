@@ -18,7 +18,7 @@
             android:id="@+id/caption_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="LIVE CAPTIONS"
+            android:text="@string/caption_live_label"
             android:textSize="10sp"
             android:textColor="#FFFF9800"
             android:letterSpacing="0.1"
