@@ -153,6 +153,15 @@
     <string name="scam_warning_body">ಇದು ವಂಚನೆಯಾಗಿರಬಹುದು. OTP, ಹಣ ಅಥವಾ ವೈಯಕ್ತಿಕ ಮಾಹಿತಿ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.</string>
     <string name="safety_alert_label">ಸುರಕ್ಷಿತ ಎಚ್ಚರಿಕೆ</string>
     <string name="safety_alert_body">ಗಾರ್ಡಿಯನ್‌ಗೆ ತಿಳಿಸಲಾಗಿದೆ.</string>
+
+    <string name="protection_badge_label">AppShield AI ಈ ಕರೆನ್ನು ರಕ್ಷಿಸುತ್ತಿದೆ</string>
+
+    <string name="caller_info_badge">ಕರೆಗಾರ ಮಾಹಿತಿ</string>
+    <string name="caller_info_label_country">ದೇಶ</string>
+    <string name="caller_info_label_location">ಸ್ಥಳ</string>
+    <string name="caller_info_label_carrier">ಕ್ಯಾರಿಯರ್</string>
+    <string name="caller_info_label_line_type">ಲೈನ್ ವಿಧ</string>
+    <string name="caller_info_unknown">ಅಜ್ಞಾತ</string>
     <string name="payment_warning_badge">ಪಾವತಿ ಎಚ್ಚರಿಕೆ</string>
     <string name="payment_warning_title">ನೀವು ವಂಚನೆಯಲ್ಲಿರಬಹುದು</string>
     <string name="payment_warning_body">ಹಣ ಕಳುಹಿಸಬೇಡಿ. OTP, UPI PIN ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.</string>

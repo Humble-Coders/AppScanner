@@ -153,6 +153,15 @@
     <string name="scam_warning_body">இது மோசடியாக இருக்கலாம். OTP, பணம் அல்லது தனிப்பட்ட தகவல் பகிர வேண்டாம்.</string>
     <string name="safety_alert_label">பாதுகாப்பு எச்சரிக்கை</string>
     <string name="safety_alert_body">கார்டியனுக்கு அறிவிக்கப்பட்டது.</string>
+
+    <string name="protection_badge_label">AppShield AI இந்த அழைப்பை பாதுகாக்கிறது</string>
+
+    <string name="caller_info_badge">அழைப்பாளர் தகவல்</string>
+    <string name="caller_info_label_country">நாடு</string>
+    <string name="caller_info_label_location">இடம்</string>
+    <string name="caller_info_label_carrier">கேரியர்</string>
+    <string name="caller_info_label_line_type">லைன் வகை</string>
+    <string name="caller_info_unknown">தெரியவில்லை</string>
     <string name="payment_warning_badge">கட்டண எச்சரிக்கை</string>
     <string name="payment_warning_title">மோசடி நிலையில் இருக்கலாம்</string>
     <string name="payment_warning_body">பணம் அனுப்ப வேண்டாம். OTP, UPI PIN, வங்கி விவரங்கள் பகிர வேண்டாம்.</string>

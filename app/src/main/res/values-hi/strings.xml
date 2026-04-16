@@ -153,6 +153,15 @@
     <string name="scam_warning_body">यह स्कैम हो सकता है (जैसे डिजिटल अरेस्ट, खाता ब्लॉक, OTP माँग)। OTP, पैसा या व्यक्तिगत जानकारी न दें।</string>
     <string name="safety_alert_label">सुरक्षा अलर्ट</string>
     <string name="safety_alert_body">गार्डियन को सूचित कर दिया गया है।</string>
+
+    <string name="protection_badge_label">AppShield AI इस कॉल की सुरक्षा कर रहा है</string>
+
+    <string name="caller_info_badge">कॉलर जानकारी</string>
+    <string name="caller_info_label_country">देश</string>
+    <string name="caller_info_label_location">स्थान</string>
+    <string name="caller_info_label_carrier">कैरियर</string>
+    <string name="caller_info_label_line_type">लाइन प्रकार</string>
+    <string name="caller_info_unknown">अज्ञात</string>
     <string name="payment_warning_badge">भुगतान चेतावनी</string>
     <string name="payment_warning_title">आप स्कैम का शिकार हो सकते हैं</string>
     <string name="payment_warning_body">पैसा न भेजें। OTP, UPI PIN, बैंक विवरण या स्क्रीनशॉट साझा न करें। कॉल समाप्त करें और किसी भरोसेमंद से संपर्क करें।</string>

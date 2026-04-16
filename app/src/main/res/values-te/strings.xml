@@ -153,6 +153,15 @@
     <string name="scam_warning_body">ఇది మోసం కావచ్చు. OTP, డబ్బు లేదా వ్యక్తిగత వివరాలు పంచవద్దు.</string>
     <string name="safety_alert_label">సురక్షిత హెచ్చరిక</string>
     <string name="safety_alert_body">గార్డియన్‌కు తెలియజేయబడింది.</string>
+
+    <string name="protection_badge_label">AppShield AI ఈ కాల్‌ను రక్షిస్తోంది</string>
+
+    <string name="caller_info_badge">కాలర్ సమాచారం</string>
+    <string name="caller_info_label_country">దేశం</string>
+    <string name="caller_info_label_location">స్థానం</string>
+    <string name="caller_info_label_carrier">క్యారియర్</string>
+    <string name="caller_info_label_line_type">లైన్ రకం</string>
+    <string name="caller_info_unknown">తెలియదు</string>
     <string name="payment_warning_badge">చెల్లింపు హెచ్చరిక</string>
     <string name="payment_warning_title">మీరు మోసంలో ఉండవచ్చు</string>
     <string name="payment_warning_body">డబ్బు పంపవద్దు. OTP, UPI PIN పంచవద్దు.</string>

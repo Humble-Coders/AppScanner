@@ -487,9 +487,9 @@ class CallRecordingService : Service() {
                             WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                     format = android.graphics.PixelFormat.TRANSLUCENT
-                    gravity = android.view.Gravity.TOP or android.view.Gravity.END
-                    x = 16
-                    y = 48
+                    gravity = android.view.Gravity.CENTER
+                    x = 0
+                    y = 0
                 }
                 wm.addView(root, params)
                 Log.d(TAG, "[RecService] Protection badge shown")

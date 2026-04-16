@@ -174,7 +174,7 @@
     <string name="safety_alert_body">Guardian has been contacted.</string>
 
     <!-- Protection badge (shown during active scam-detection recording) -->
-    <string name="protection_badge_label">AppShield AI · Protecting</string>
+    <string name="protection_badge_label">AppShield AI is protecting this call</string>
 
     <!-- Caller info overlay (NumLookupAPI) -->
     <string name="caller_info_badge">CALLER INFO</string>

@@ -153,6 +153,15 @@
     <string name="scam_warning_body">ਇਹ ਘਪਲਾ ਹੋ ਸਕਦਾ ਹੈ। OTP, ਪੈਸਾ ਜਾਂ ਨਿੱਜੀ ਜਾਣਕਾਰੀ ਨਾ ਸਾਂਝੀ ਕਰੋ।</string>
     <string name="safety_alert_label">ਸੁਰੱਖਿਆ ਚੇਤਾਵਨੀ</string>
     <string name="safety_alert_body">ਗਾਰਡੀਅਨ ਨੂੰ ਸੂਚਿਤ ਕਰ ਦਿੱਤਾ ਗਿਆ।</string>
+
+    <string name="protection_badge_label">AppShield AI ਇਸ ਕਾਲ ਦੀ ਰੱਖਿਆ ਕਰ ਰਿਹਾ ਹੈ</string>
+
+    <string name="caller_info_badge">ਕਾਲਰ ਜਾਣਕਾਰੀ</string>
+    <string name="caller_info_label_country">ਦੇਸ਼</string>
+    <string name="caller_info_label_location">ਟਿਕਾਣਾ</string>
+    <string name="caller_info_label_carrier">ਕੈਰੀਅਰ</string>
+    <string name="caller_info_label_line_type">ਲਾਈਨ ਕਿਸਮ</string>
+    <string name="caller_info_unknown">ਅਣਜਾਣ</string>
     <string name="payment_warning_badge">ਭੁਗਤਾਨ ਚੇਤਾਵਨੀ</string>
     <string name="payment_warning_title">ਤੁਸੀਂ ਘਪਲੇ ਵਿੱਚ ਹੋ ਸਕਦੇ ਹੋ</string>
     <string name="payment_warning_body">ਪੈਸਾ ਨਾ ਭੇਜੋ। OTP, UPI PIN ਨਾ ਸਾਂਝਾ ਕਰੋ।</string>
