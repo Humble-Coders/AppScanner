@@ -23,7 +23,7 @@ data class AppShieldResponse(
 object AppShieldApi {
 
     private const val TAG = "AppShield"
-    private const val API_URL = "http://Appshield-api-env.eba-bwqa2mk5.us-east-1.elasticbeanstalk.com/api/v1/verify-app"
+    private const val API_URL = "https://api.humblesolutions.in"
     private const val CONNECT_TIMEOUT_MS = 30_000
     private const val READ_TIMEOUT_MS = 30_000
 
