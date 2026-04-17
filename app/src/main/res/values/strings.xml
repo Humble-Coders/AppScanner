@@ -190,6 +190,16 @@
     <!-- Protection badge (shown during active scam-detection recording) -->
     <string name="protection_badge_label">AppShield AI is protecting this call</string>
 
+    <!-- Call protection mode (home/scanner screen) -->
+    <string name="call_protection_title">CALL PROTECTION</string>
+    <string name="call_protection_always_title">Always listening</string>
+    <string name="call_protection_always_body">Detect scam phrases automatically during WhatsApp calls.</string>
+    <string name="call_protection_ask_title">Ask every time</string>
+    <string name="call_protection_ask_body">Record the call normally, but only start detection after you tap “Check my call”.</string>
+
+    <!-- Ask mode in-call overlay -->
+    <string name="check_my_call">Check my call</string>
+
     <!-- Caller info overlay (NumLookupAPI) -->
     <string name="caller_info_badge">CALLER INFO</string>
     <string name="caller_info_label_country">COUNTRY</string>

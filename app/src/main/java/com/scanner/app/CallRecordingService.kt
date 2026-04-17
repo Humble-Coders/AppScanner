@@ -17,7 +17,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
+import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -80,10 +82,13 @@ class CallRecordingService : Service() {
     private var scamWarningOverlayView: View? = null
     /** Small "AppShield AI is protecting this call" badge shown while STT pipeline is active. */
     private var protectionBadgeView: View? = null
+    /** In "Ask every time" mode, user must tap this before detection/alerts start. */
+    private var checkMyCallOverlayView: View? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var isRecordingActive = false
     private var hasRaisedScamAlertForCall = false
     private var hasRaisedSafetyAlertForCall = false
+    private var detectionArmedForThisCall = true
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -110,11 +115,18 @@ class CallRecordingService : Service() {
         }
         hasRaisedScamAlertForCall = false
         hasRaisedSafetyAlertForCall = false
+        detectionArmedForThisCall = CallProtectionModeStore.getMode(this) == CallProtectionMode.ALWAYS_LISTENING
 
         Log.i(TAG, "")
         Log.i(TAG, "┌─────────────────────────────────────────┐")
         Log.i(TAG, "│  >>> WHATSAPP CALL STARTED               │")
-        Log.i(TAG, "│  Scam phrase detection: ACTIVE           │")
+        Log.i(
+            TAG,
+            if (detectionArmedForThisCall)
+                "│  Scam phrase detection: ACTIVE           │"
+            else
+                "│  Scam phrase detection: PAUSED (ask)     │"
+        )
         Log.i(TAG, "└─────────────────────────────────────────┘")
         Log.i(TAG, "[RecService] startRecording() — beginning setup")
 
@@ -135,6 +147,11 @@ class CallRecordingService : Service() {
         val engine = RecordingEngine(this)
         recordingEngine = engine
 
+        Log.i(
+            TAG,
+            "[RecService] Call protection mode=${CallProtectionModeStore.getMode(this)} armed=$detectionArmedForThisCall"
+        )
+
         val apiKey = BuildConfig.GOOGLE_CLOUD_SPEECH_API_KEY
         if (apiKey.isNotBlank()) {
             Log.i(TAG, "[RecService] Caption pipeline: API key present (${apiKey.take(8)}…), enabling")
@@ -148,9 +165,17 @@ class CallRecordingService : Service() {
             engine.onPcmChunk = { pcm -> pipeline.feedPcm(pcm) }
             pipeline.start()
             Log.i(TAG, "[RecService] Caption pipeline started (scam phrase detection enabled)")
-            showProtectionBadge()
+            if (detectionArmedForThisCall) {
+                showProtectionBadge()
+            } else {
+                showCheckMyCallOverlay()
+            }
         } else {
             Log.w(TAG, "[RecService] GOOGLE_CLOUD_SPEECH_API_KEY not set in gradle.properties — captions disabled")
+            if (!detectionArmedForThisCall) {
+                // Still show the user's entrypoint so the UI behavior is consistent in ask-mode.
+                showCheckMyCallOverlay()
+            }
         }
 
         val outputDir = getRecordingsDir()
@@ -188,6 +213,7 @@ class CallRecordingService : Service() {
         recordingEngine?.onPcmChunk = null
         removeScamWarningOverlay()
         removeProtectionBadge()
+        removeCheckMyCallOverlay()
 
         updateNotification("Processing recording...")
 
@@ -279,6 +305,7 @@ class CallRecordingService : Service() {
         recordingEngine = null
         removeScamWarningOverlay()
         removeProtectionBadge()
+        removeCheckMyCallOverlay()
         releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -304,6 +331,10 @@ class CallRecordingService : Service() {
 
     private fun onTranscriptReceived(transcript: String) {
         Log.i(TAG, "[STT] Transcript received: \"$transcript\"")
+        if (!detectionArmedForThisCall) {
+            Log.d(TAG, "[STT] Detection paused (ask mode) — ignoring transcript until user taps Check my call")
+            return
+        }
 
         val matched = firstScamMatch(transcript)
         if (matched != null && !hasRaisedScamAlertForCall) {
@@ -495,6 +526,74 @@ class CallRecordingService : Service() {
                 Log.d(TAG, "[RecService] Protection badge shown")
             } catch (e: Exception) {
                 Log.e(TAG, "[RecService] Failed to show protection badge", e)
+            }
+        }
+    }
+
+    private fun showCheckMyCallOverlay() {
+        handler.post {
+            if (checkMyCallOverlayView != null) return@post
+            Log.d(TAG, "[RecService] showCheckMyCallOverlay(): attempting to show")
+            val canOverlay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Settings.canDrawOverlays(this)
+            } else true
+            if (!canOverlay) {
+                Log.w(TAG, "[RecService] showCheckMyCallOverlay(): cannot draw overlays (permission missing)")
+                return@post
+            }
+            try {
+                val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                val root = LayoutInflater.from(this).inflate(R.layout.check_my_call_overlay, null)
+                checkMyCallOverlayView = root
+                root.findViewById<Button>(R.id.check_my_call_button).setOnClickListener {
+                    Log.i(TAG, "[RecService] User tapped: Check my call — enabling scam phrase detection now")
+                    if (captionPipeline == null) {
+                        Toast.makeText(
+                            this,
+                            "Call checking is unavailable on this build (captions disabled).",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@setOnClickListener
+                    }
+                    detectionArmedForThisCall = true
+                    removeCheckMyCallOverlay()
+                    showProtectionBadge()
+                }
+                val params = WindowManager.LayoutParams().apply {
+                    width = WindowManager.LayoutParams.WRAP_CONTENT
+                    height = WindowManager.LayoutParams.WRAP_CONTENT
+                    type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                    } else {
+                        @Suppress("DEPRECATION")
+                        WindowManager.LayoutParams.TYPE_PHONE
+                    }
+                    flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    format = android.graphics.PixelFormat.TRANSLUCENT
+                    gravity = android.view.Gravity.CENTER
+                    x = 0
+                    y = 0
+                }
+                wm.addView(root, params)
+                Log.d(TAG, "[RecService] Check-my-call overlay shown (ask mode)")
+            } catch (e: Exception) {
+                Log.e(TAG, "[RecService] Failed to show check-my-call overlay", e)
+            }
+        }
+    }
+
+    private fun removeCheckMyCallOverlay() {
+        handler.post {
+            checkMyCallOverlayView?.let { view ->
+                try {
+                    val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                    wm.removeView(view)
+                } catch (e: Exception) {
+                    Log.e(TAG, "[RecService] Failed to remove check-my-call overlay", e)
+                }
+                checkMyCallOverlayView = null
             }
         }
     }

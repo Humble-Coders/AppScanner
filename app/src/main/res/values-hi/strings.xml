@@ -169,6 +169,14 @@
 
     <string name="protection_badge_label">AppShield AI इस कॉल की सुरक्षा कर रहा है</string>
 
+    <string name="call_protection_title">कॉल सुरक्षा</string>
+    <string name="call_protection_always_title">हमेशा सुनें</string>
+    <string name="call_protection_always_body">WhatsApp कॉल के दौरान स्कैम शब्द अपने आप पहचानें।</string>
+    <string name="call_protection_ask_title">हर बार पूछें</string>
+    <string name="call_protection_ask_body">कॉल सामान्य रूप से रिकॉर्ड होगी, लेकिन “मेरी कॉल जाँचें” टैप करने के बाद ही पहचान शुरू होगी।</string>
+
+    <string name="check_my_call">मेरी कॉल जाँचें</string>
+
     <string name="caller_info_badge">कॉलर जानकारी</string>
     <string name="caller_info_label_country">देश</string>
     <string name="caller_info_label_location">स्थान</string>

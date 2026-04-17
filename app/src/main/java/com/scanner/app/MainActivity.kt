@@ -13,6 +13,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -93,6 +94,7 @@ fun AppShell() {
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         PitchPhoneRoleStore.syncFromDisk(context)
+        CallProtectionModeStore.syncFromDisk(context)
     }
     val pitchRole by PitchPhoneRoleStore.role.collectAsState()
 
@@ -259,6 +261,7 @@ fun ScannerScreen() {
     var languageMenuExpanded by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val recentInstalls = remember { mutableStateListOf<InstallEvent>() }
+    val callProtectionMode by CallProtectionModeStore.mode.collectAsState()
 
     val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle) {
@@ -353,6 +356,98 @@ fun ScannerScreen() {
                                         currentLocaleTag = tag
                                         languageMenuExpanded = false
                                     }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(cardBg)
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.call_protection_title),
+                        color = accent,
+                        fontSize = 10.sp,
+                        letterSpacing = 2.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFF1E2530))
+                                .clickable { CallProtectionModeStore.setMode(context, CallProtectionMode.ALWAYS_LISTENING) }
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = callProtectionMode == CallProtectionMode.ALWAYS_LISTENING,
+                                onClick = { CallProtectionModeStore.setMode(context, CallProtectionMode.ALWAYS_LISTENING) },
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = accent,
+                                    unselectedColor = textSecondary
+                                )
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.call_protection_always_title),
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = stringResource(R.string.call_protection_always_body),
+                                    color = textSecondary,
+                                    fontSize = 12.sp,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFF1E2530))
+                                .clickable { CallProtectionModeStore.setMode(context, CallProtectionMode.ASK_EVERY_TIME) }
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = callProtectionMode == CallProtectionMode.ASK_EVERY_TIME,
+                                onClick = { CallProtectionModeStore.setMode(context, CallProtectionMode.ASK_EVERY_TIME) },
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = accent,
+                                    unselectedColor = textSecondary
+                                )
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.call_protection_ask_title),
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = stringResource(R.string.call_protection_ask_body),
+                                    color = textSecondary,
+                                    fontSize = 12.sp,
+                                    lineHeight = 18.sp
                                 )
                             }
                         }
