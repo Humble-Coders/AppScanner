@@ -83,6 +83,12 @@
     <string name="guardian_linked_named">%1$s ఇప్పుడు మీ గార్డియన్ — హెచ్చరికలు అందుతాయి.</string>
     <string name="guardian_linked_anon">ఈ వ్యక్తి ఇప్పుడు మీ గార్డియన్.</string>
     <string name="guardian_link_failed">లింక్ కాలేదు</string>
+    <string name="guardian_linked_dialog_title">గార్డియన్ లింక్ అయింది</string>
+    <string name="guardian_linked_dialog_title_with_name">%1$s మీ గార్డియన్</string>
+    <string name="guardian_linked_dialog_body_named">లింక్ అయింది. వారికి మీ ప్రమాద అలర్ట్‌లు మరియు కాల్ సేఫ్టీ నోటిఫికేషన్‌లు వస్తాయి.</string>
+    <string name="guardian_linked_dialog_body_anon">లింక్ అయింది. ఈ వ్యక్తికి మీ ప్రమాద అలర్ట్‌లు మరియు కాల్ సేఫ్టీ నోటిఫికేషన్‌లు వస్తాయి.</string>
+    <string name="guardian_linked_dialog_ok">సరే</string>
+    <string name="cd_guardian_linked_success">గార్డియన్ విజయవంతంగా లింక్ అయింది</string>
     <string name="become_guardian_title">గార్డియన్ అవ్వండి</string>
     <string name="become_guardian_body">QR స్కాన్ చేసి ఒకరిని రక్షించండి\nప్రమాద హెచ్చరికలు పొందండి</string>
     <string name="guardian_link_active">గార్డియన్ లింక్ సక్రియం</string>
@@ -106,6 +112,12 @@
     <string name="finance_blocked_message">ఇటీవలి కాల్‌లో మోసం సాధ్యం. గార్డియన్ అనుమతి వరకు ఫైనాన్స్ యాప్‌లు లాక్.</string>
     <string name="finance_blocked_go_home">హోమ్‌కు వెళ్లు</string>
     <string name="finance_blocked_close_cd">ఓవర్‌లే మూసి (డీబగ్)</string>
+    <string name="guardian_wards_title">మీరు రక్షించే వ్యక్తులు</string>
+    <string name="guardian_wards_count">గార్డియన్‌గా లింక్: %1$d</string>
+    <string name="guardian_wards_subtitle">మీరు గార్డ్ చేసే వ్యక్తికి స్కామ్ కాల్ తర్వాత ఫైనాన్స్ యాప్ లాక్ అయితే, మీరు దీన్ని ఇక్కడ ఎప్పుడైనా క్లియర్ చేయవచ్చు.</string>
+    <string name="guardian_clear_finance_lock">ఫైనాన్స్ యాప్ లాక్ తొలగించండి</string>
+    <string name="guardian_clear_finance_lock_done">వారి ఫోన్‌లో ఫైనాన్స్ లాక్ తొలగించబడింది.</string>
+    <string name="guardian_clear_finance_lock_failed">లాక్ తొలగించలేకపోయాం. కనెక్షన్ చెక్ చేసి మళ్లీ ప్రయత్నించండి.</string>
     <string name="overlay_permission_title">ఇతర యాప్‌లపై ప్రదర్శన</string>
     <string name="overlay_permission_body">హెచ్చరికల కోసం ఈ అనుమతి అవసరం.</string>
     <string name="overlay_permission_steps_hint">సెట్టింగ్‌లలో “ఇతర యాప్‌లపై ప్రదర్శన” ఆన్ చేయండి.</string>

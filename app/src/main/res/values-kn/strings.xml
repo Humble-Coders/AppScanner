@@ -83,6 +83,12 @@
     <string name="guardian_linked_named">%1$s ಈಗ ನಿಮ್ಮ ಗಾರ್ಡಿಯನ್ — ಎಚ್ಚರಿಕೆಗಳು ಬರುತ್ತವೆ.</string>
     <string name="guardian_linked_anon">ಈ ವ್ಯಕ್ತಿ ಈಗ ನಿಮ್ಮ ಗಾರ್ಡಿಯನ್.</string>
     <string name="guardian_link_failed">ಲಿಂಕ್ ಸಾಧ್ಯವಾಗಲಿಲ್ಲ</string>
+    <string name="guardian_linked_dialog_title">ಗಾರ್ಡಿಯನ್ ಲಿಂಕ್ ಆಯಿತು</string>
+    <string name="guardian_linked_dialog_title_with_name">%1$s ನಿಮ್ಮ ಗಾರ್ಡಿಯನ್</string>
+    <string name="guardian_linked_dialog_body_named">ಲಿಂಕ್ ಆಯಿತು. ಅವರಿಗೆ ನಿಮ್ಮ ಅಪಾಯ ಅಲರ್ಟ್‌ಗಳು ಮತ್ತು ಕರೆ ಸುರಕ್ಷತಾ ಸೂಚನೆಗಳು ಬರುತ್ತವೆ.</string>
+    <string name="guardian_linked_dialog_body_anon">ಲಿಂಕ್ ಆಯಿತು. ಈ ವ್ಯಕ್ತಿಗೆ ನಿಮ್ಮ ಅಪಾಯ ಅಲರ್ಟ್‌ಗಳು ಮತ್ತು ಕರೆ ಸುರಕ್ಷತಾ ಸೂಚನೆಗಳು ಬರುತ್ತವೆ.</string>
+    <string name="guardian_linked_dialog_ok">ಸರಿ</string>
+    <string name="cd_guardian_linked_success">ಗಾರ್ಡಿಯನ್ ಯಶಸ್ವಿಯಾಗಿ ಲಿಂಕ್ ಆಯಿತು</string>
     <string name="become_guardian_title">ಗಾರ್ಡಿಯನ್ ಆಗಿ</string>
     <string name="become_guardian_body">QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿ ಒಬ್ಬರನ್ನು ರಕ್ಷಿಸಿ\nಅಪಾಯ ಎಚ್ಚರಿಕೆಗಳನ್ನು ಪಡೆಯಿರಿ</string>
     <string name="guardian_link_active">ಗಾರ್ಡಿಯನ್ ಲಿಂಕ್ ಸಕ್ರಿಯ</string>
@@ -106,6 +112,12 @@
     <string name="finance_blocked_message">ಇತ್ತೀಚಿನ ಕಾಲ್‌ನಲ್ಲಿ ವಂಚನೆ ಸಾಧ್ಯ. ಗಾರ್ಡಿಯನ್ ಅನುಮತಿ ವರೆಗೆ ಹಣಕಾಸು ಅಪ್‌ಗಳು ಲಾಕ್.</string>
     <string name="finance_blocked_go_home">ಹೋಮ್‌ಗೆ ಹೋಗಿ</string>
     <string name="finance_blocked_close_cd">ಓವರ್ಲೇ ಮುಚ್ಚಿ (ಡೀಬಗ್)</string>
+    <string name="guardian_wards_title">ನೀವು ರಕ್ಷಿಸುವವರು</string>
+    <string name="guardian_wards_count">ಗಾರ್ಡಿಯನ್‌గా ಲಿಂಕ್: %1$d</string>
+    <string name="guardian_wards_subtitle">ನೀವು ಗಾರ್ಡ್ ಮಾಡುವ ವ್ಯಕ್ತಿಗೆ ವಂಚನೆ ಕರೆ ನಂತರ ಹಣಕಾಸು ಅಪ್ ಲಾಕ್ ಇದ್ದರೆ, ನೀವು ಇದನ್ನು ಇಲ್ಲಿ ಯಾವಾಗ ಬೇಕಾದರೂ ತೆರೆಯಬಹುದು.</string>
+    <string name="guardian_clear_finance_lock">ಹಣಕಾಸು ಅಪ್ ಲಾಕ್ ತೆಗೆಯಿರಿ</string>
+    <string name="guardian_clear_finance_lock_done">ಅವರ ಫೋನ್‌ನಲ್ಲಿ ಹಣಕಾಸು ಲಾಕ್ ತೆರೆಯಲಾಗಿದೆ.</string>
+    <string name="guardian_clear_finance_lock_failed">ಲಾಕ್ ತೆರೆಯಲಾಗಲಿಲ್ಲ. ಸಂಪರ್ಕ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
     <string name="overlay_permission_title">ಇತರ ಅಪ್‌ಗಳ ಮೇಲೆ</string>
     <string name="overlay_permission_body">ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ ಈ ಅನುಮತಿ ಬೇಕು.</string>
     <string name="overlay_permission_steps_hint">ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ “ಇತರ ಅಪ್‌ಗಳ ಮೇಲೆ ಪ್ರದರ್ಶನ” ಆನ್ ಮಾಡಿ.</string>

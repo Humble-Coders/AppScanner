@@ -83,6 +83,12 @@
     <string name="guardian_linked_named">%1$s अब आपके गार्डियन हैं और आपके अलर्ट प्राप्त करेंगे।</string>
     <string name="guardian_linked_anon">यह व्यक्ति अब आपके गार्डियन हैं और आपके अलर्ट प्राप्त करेंगे।</string>
     <string name="guardian_link_failed">लिंक नहीं हो सका</string>
+    <string name="guardian_linked_dialog_title">गार्डियन लिंक हो गया</string>
+    <string name="guardian_linked_dialog_title_with_name">%1$s आपके गार्डियन हैं</string>
+    <string name="guardian_linked_dialog_body_named">लिंक हो गया। उन्हें आपके जोखिम अलर्ट और कॉल सुरक्षा सूचनाएँ मिलेंगी।</string>
+    <string name="guardian_linked_dialog_body_anon">लिंक हो गया। यह व्यक्ति आपके जोखिम अलर्ट और कॉल सुरक्षा सूचनाएँ प्राप्त करेगा।</string>
+    <string name="guardian_linked_dialog_ok">ठीक है</string>
+    <string name="cd_guardian_linked_success">गार्डियन सफलतापूर्वक लिंक हुआ</string>
     <string name="become_guardian_title">गार्डियन बनें</string>
     <string name="become_guardian_body">किसी का QR स्कैन करके उन्हें सुरक्षित करें\nऔर उनके जोखिम अलर्ट प्राप्त करें</string>
     <string name="guardian_link_active">गार्डियन लिंक सक्रिय</string>
@@ -106,6 +112,12 @@
     <string name="finance_blocked_message">हाल की कॉल में संभावित स्कैम पाया गया। गार्डियन की मंजूरी के बिना भुगतान ऐप बंद रहेंगे। बाकी फोन उपयोग कर सकते हैं।</string>
     <string name="finance_blocked_go_home">होम पर जाएँ</string>
     <string name="finance_blocked_close_cd">ओवरले बंद (डीबग)</string>
+    <string name="guardian_wards_title">जिन्हें आप सुरक्षित करते हैं</string>
+    <string name="guardian_wards_count">गार्डियन के रूप में लिंक: %1$d</string>
+    <string name="guardian_wards_subtitle">यदि आपकी सुरक्षा में किसी के फोन पर स्कैम कॉल के बाद फाइनेंस ऐप लॉक हो जाए, तो आप इसे यहाँ कभी भी हटा सकते हैं।</string>
+    <string name="guardian_clear_finance_lock">फाइनेंस ऐप लॉक हटाएँ</string>
+    <string name="guardian_clear_finance_lock_done">उनके फोन पर फाइनेंस लॉक हट गया।</string>
+    <string name="guardian_clear_finance_lock_failed">लॉक हटाया नहीं जा सका। कनेक्शन जाँचें और फिर से प्रयास करें।</string>
     <string name="overlay_permission_title">अन्य ऐप्स पर प्रदर्शन</string>
     <string name="overlay_permission_body">गार्डियन अलर्ट, स्कैम चेतावनी और जोखिम ओवरले दिखाने के लिए अनुमति दें।</string>
     <string name="overlay_permission_steps_hint">सेटिंग्स में इस ऐप के लिए “अन्य ऐप्स पर प्रदर्शन” चालू करें।</string>
