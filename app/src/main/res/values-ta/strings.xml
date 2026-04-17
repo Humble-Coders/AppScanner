@@ -105,6 +105,7 @@
     <string name="finance_blocked_title">திறப்பு தடை</string>
     <string name="finance_blocked_message">சமீபத்திய அழைப்பில் மோசடி சாத்தியம். கார்டியன் அனுமதி வரை நிதி பயன்பாடுகள் பூட்டப்பட்டுள்ளன.</string>
     <string name="finance_blocked_go_home">முகப்புக்குச் செல்</string>
+    <string name="finance_blocked_close_cd">மேலடுக்கை மூடு (பிழைத்திருத்தம்)</string>
     <string name="overlay_permission_title">மற்ற பயன்பாடுகள் மேல்</string>
     <string name="overlay_permission_body">எச்சரிக்கைகள் காட்டஇந்த அனுமதி தேவை.</string>
     <string name="overlay_permission_steps_hint">அமைப்புகளில் “மற்ற பயன்பாடுகள் மேல் காட்டு” என்பதை இயக்கவும்.</string>

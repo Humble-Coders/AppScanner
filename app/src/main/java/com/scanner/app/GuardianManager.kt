@@ -5,6 +5,7 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.tasks.await
@@ -111,6 +112,18 @@ object GuardianManager {
                     "linkedAt" to FieldValue.serverTimestamp()
                 )
             ).await()
+        try {
+            db.collection("wardsByGuardian").document(guardianUid).collection("protectedUsers").document(myUid)
+                .set(
+                    mapOf(
+                        "protectedUserId" to myUid,
+                        "linkedAt" to FieldValue.serverTimestamp(),
+                    ),
+                    SetOptions.merge(),
+                ).await()
+        } catch (e: Exception) {
+            Log.e(TAG, "wardsByGuardian mirror failed (deploy firestore.rules?)", e)
+        }
         Log.d(TAG, "Linked guardian ${guardianUid.take(8)}… for protected ${myUid.take(8)}… by phone")
         return guardianName
     }
@@ -134,6 +147,18 @@ object GuardianManager {
                     "linkedAt" to FieldValue.serverTimestamp()
                 )
             ).await()
+        try {
+            db.collection("wardsByGuardian").document(myUid).collection("protectedUsers").document(protectedUserId)
+                .set(
+                    mapOf(
+                        "protectedUserId" to protectedUserId,
+                        "linkedAt" to FieldValue.serverTimestamp(),
+                    ),
+                    SetOptions.merge(),
+                ).await()
+        } catch (e: Exception) {
+            Log.e(TAG, "wardsByGuardian mirror failed (deploy firestore.rules?)", e)
+        }
         Log.d(TAG, "uid=${myUid.take(8)} is now guardian for ${protectedUserId.take(8)}")
     }
 
@@ -197,6 +222,79 @@ object GuardianManager {
                 )
             ).await()
         Log.d(TAG, "grantFinanceUnlock: until=$until for ${protectedUserId.take(8)}…")
+    }
+
+    /** One-shot read of [wardsByGuardian] (written when victims link by phone or guardian scans QR). */
+    suspend fun listWardsFromRegistry(): List<String> {
+        val myUid = getOrCreateUserId()
+        return try {
+            db.collection("wardsByGuardian").document(myUid).collection("protectedUsers")
+                .get()
+                .await()
+                .documents
+                .map { it.id }
+        } catch (e: Exception) {
+            Log.e(TAG, "listWardsFromRegistry failed", e)
+            emptyList()
+        }
+    }
+
+    /** Legacy listing via collection group (requires composite index); used to merge old links. */
+    suspend fun listLegacyProtectedUserIdsFromCollectionGroup(): List<String> {
+        val myUid = getOrCreateUserId()
+        return try {
+            db.collectionGroup("tokens")
+                .whereEqualTo("guardianUid", myUid)
+                .get()
+                .await()
+                .documents
+                .mapNotNull { it.reference.parent.parent?.id }
+        } catch (e: Exception) {
+            Log.w(TAG, "listLegacyProtectedUserIdsFromCollectionGroup failed (missing index is OK)", e)
+            emptyList()
+        }
+    }
+
+    /**
+     * Live updates when a protected user links this device as guardian by phone
+     * (writes [wardsByGuardian] on their device). Callback may run on the main thread.
+     */
+    fun addWardsRegistryListener(
+        guardianUid: String,
+        onUpdate: (List<String>) -> Unit,
+    ): ListenerRegistration {
+        return db.collection("wardsByGuardian").document(guardianUid).collection("protectedUsers")
+            .addSnapshotListener { snap, e ->
+                if (e != null) {
+                    Log.w(TAG, "wardsRegistry listener: ${e.message}")
+                    return@addSnapshotListener
+                }
+                val ids = snap?.documents?.map { it.id }?.distinct().orEmpty()
+                Log.d(TAG, "wardsRegistry snapshot: ${ids.size} ward(s)")
+                onUpdate(ids)
+            }
+    }
+
+    /**
+     * All user IDs this device is linked as guardian for (phone link from victim and/or QR scan).
+     * Merges [wardsByGuardian] with legacy collection-group on `tokens` when the index exists.
+     */
+    suspend fun listProtectedUserIdsForCurrentGuardian(): List<String> {
+        val fromRegistry = listWardsFromRegistry()
+        val fromLegacyTokens = listLegacyProtectedUserIdsFromCollectionGroup()
+        return (fromRegistry + fromLegacyTokens).distinct()
+    }
+
+    /**
+     * Clears active post-scam finance lock on every protected user by extending
+     * [financeUnlockUntilMs] through the scam protection window (same max effect as guardian alert button).
+     */
+    suspend fun clearFinanceLockForAllProtectedUsers() {
+        val wards = listProtectedUserIdsForCurrentGuardian()
+        for (id in wards) {
+            grantFinanceUnlockToProtectedUser(id, ScamAlertState.SCAM_FINANCE_PROTECTION_MS)
+        }
+        Log.d(TAG, "clearFinanceLockForAllProtectedUsers: updated ${wards.size} ward(s)")
     }
 
     /**

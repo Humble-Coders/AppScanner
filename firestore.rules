@@ -25,7 +25,20 @@ service cloud.firestore {
       allow write: if request.auth != null && (
         request.auth.uid == guardianUid || request.auth.uid == protectedUserId
       );
-      allow read: if request.auth != null && request.auth.uid == protectedUserId;
+      allow read: if request.auth != null && (
+        request.auth.uid == protectedUserId ||
+        request.auth.uid == guardianUid
+      );
+    }
+
+    // Reverse index: who each guardian protects (readable without collection-group query).
+    // Written when victim links by phone (protectedUserId) or when guardian scans QR (guardianUid).
+    match /wardsByGuardian/{guardianUid}/protectedUsers/{protectedUserId} {
+      allow read: if request.auth != null && request.auth.uid == guardianUid;
+      allow create, update: if request.auth != null && (
+        request.auth.uid == guardianUid ||
+        request.auth.uid == protectedUserId
+      );
     }
   }
 }

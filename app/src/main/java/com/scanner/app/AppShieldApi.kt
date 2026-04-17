@@ -23,7 +23,9 @@ data class AppShieldResponse(
 object AppShieldApi {
 
     private const val TAG = "AppShield"
-    private const val API_URL = "https://api.humblesolutions.in"
+    private const val API_BASE_URL = "https://api.humblesolutions.in"
+    // Backend returns 404 "Cannot POST /" if we POST the domain root.
+    private const val VERIFY_PATH = "/api/v1/verify-app"
     private const val CONNECT_TIMEOUT_MS = 30_000
     private const val READ_TIMEOUT_MS = 30_000
 
@@ -92,6 +94,7 @@ object AppShieldApi {
         requestedPermissions: List<String>
     ): AppShieldResponse? {
         return try {
+            val url = API_BASE_URL.trimEnd('/') + VERIFY_PATH
             val body = JSONObject().apply {
                 put("package_name", packageName)
                 if (certificateSha256 != null) put("certificate_sha256", certificateSha256)
@@ -103,7 +106,7 @@ object AppShieldApi {
 
             Log.d(TAG, "Request: $body")
 
-            val connection = (URL(API_URL).openConnection() as HttpURLConnection).apply {
+            val connection = (URL(url).openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
                 setRequestProperty("Content-Type", "application/json")
                 connectTimeout = CONNECT_TIMEOUT_MS

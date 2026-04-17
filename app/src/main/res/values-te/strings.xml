@@ -105,6 +105,7 @@
     <string name="finance_blocked_title">తెరవడం నిరోధం</string>
     <string name="finance_blocked_message">ఇటీవలి కాల్‌లో మోసం సాధ్యం. గార్డియన్ అనుమతి వరకు ఫైనాన్స్ యాప్‌లు లాక్.</string>
     <string name="finance_blocked_go_home">హోమ్‌కు వెళ్లు</string>
+    <string name="finance_blocked_close_cd">ఓవర్‌లే మూసి (డీబగ్)</string>
     <string name="overlay_permission_title">ఇతర యాప్‌లపై ప్రదర్శన</string>
     <string name="overlay_permission_body">హెచ్చరికల కోసం ఈ అనుమతి అవసరం.</string>
     <string name="overlay_permission_steps_hint">సెట్టింగ్‌లలో “ఇతర యాప్‌లపై ప్రదర్శన” ఆన్ చేయండి.</string>

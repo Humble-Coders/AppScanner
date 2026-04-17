@@ -93,6 +93,12 @@
     <string name="add_guardian_button">Add guardian</string>
     <string name="guardian_linked_named">%1$s is now your guardian and will get your alerts.</string>
     <string name="guardian_linked_anon">This person is now your guardian and will get your alerts.</string>
+    <string name="guardian_linked_dialog_title">Guardian linked</string>
+    <string name="guardian_linked_dialog_title_with_name">%1$s is your guardian</string>
+    <string name="guardian_linked_dialog_body_named">You’re linked. They’ll receive your risk alerts and call safety notifications.</string>
+    <string name="guardian_linked_dialog_body_anon">You’re linked. This person will receive your risk alerts and call safety notifications.</string>
+    <string name="guardian_linked_dialog_ok">OK</string>
+    <string name="cd_guardian_linked_success">Guardian linked successfully</string>
     <string name="guardian_link_failed">Could not link</string>
     <string name="become_guardian_title">BECOME A GUARDIAN</string>
     <string name="become_guardian_body">Scan someone\'s QR code to protect them\nand receive their risk alerts</string>
@@ -117,6 +123,14 @@
     <string name="finance_blocked_title">Opening blocked</string>
     <string name="finance_blocked_message">A possible scam was detected on a recent call. Finance and payment apps stay locked until your guardian approves access in their alert. You can use the rest of your phone.</string>
     <string name="finance_blocked_go_home">Go to home</string>
+    <string name="finance_blocked_close_cd">Dismiss overlay (debug)</string>
+
+    <string name="guardian_wards_title">People you protect</string>
+    <string name="guardian_wards_count">Linked as guardian: %1$d</string>
+    <string name="guardian_wards_subtitle">If someone you guard has a finance app lock after a scam call, you can clear it here anytime.</string>
+    <string name="guardian_clear_finance_lock">Clear finance app lock</string>
+    <string name="guardian_clear_finance_lock_done">Finance lock cleared on their phone.</string>
+    <string name="guardian_clear_finance_lock_failed">Could not clear lock. Check connection and try again.</string>
 
     <string name="overlay_permission_title">DISPLAY OVER OTHER APPS</string>
     <string name="overlay_permission_body">Allow this app to draw on top of other apps so guardian alerts, scam warnings, and risk overlays can appear when something important happens.</string>

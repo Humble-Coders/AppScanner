@@ -105,6 +105,7 @@
     <string name="finance_blocked_title">खोलना ब्लॉक है</string>
     <string name="finance_blocked_message">हाल की कॉल में संभावित स्कैम पाया गया। गार्डियन की मंजूरी के बिना भुगतान ऐप बंद रहेंगे। बाकी फोन उपयोग कर सकते हैं।</string>
     <string name="finance_blocked_go_home">होम पर जाएँ</string>
+    <string name="finance_blocked_close_cd">ओवरले बंद (डीबग)</string>
     <string name="overlay_permission_title">अन्य ऐप्स पर प्रदर्शन</string>
     <string name="overlay_permission_body">गार्डियन अलर्ट, स्कैम चेतावनी और जोखिम ओवरले दिखाने के लिए अनुमति दें।</string>
     <string name="overlay_permission_steps_hint">सेटिंग्स में इस ऐप के लिए “अन्य ऐप्स पर प्रदर्शन” चालू करें।</string>

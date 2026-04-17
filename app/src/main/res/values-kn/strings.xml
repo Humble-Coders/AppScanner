@@ -105,6 +105,7 @@
     <string name="finance_blocked_title">ತೆರೆಯುವಿಕೆ ನಿರ್ಬಂಧ</string>
     <string name="finance_blocked_message">ಇತ್ತೀಚಿನ ಕಾಲ್‌ನಲ್ಲಿ ವಂಚನೆ ಸಾಧ್ಯ. ಗಾರ್ಡಿಯನ್ ಅನುಮತಿ ವರೆಗೆ ಹಣಕಾಸು ಅಪ್‌ಗಳು ಲಾಕ್.</string>
     <string name="finance_blocked_go_home">ಹೋಮ್‌ಗೆ ಹೋಗಿ</string>
+    <string name="finance_blocked_close_cd">ಓವರ್ಲೇ ಮುಚ್ಚಿ (ಡೀಬಗ್)</string>
     <string name="overlay_permission_title">ಇತರ ಅಪ್‌ಗಳ ಮೇಲೆ</string>
     <string name="overlay_permission_body">ಎಚ್ಚರಿಕೆಗಳಿಗಾಗಿ ಈ ಅನುಮತಿ ಬೇಕು.</string>
     <string name="overlay_permission_steps_hint">ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ “ಇತರ ಅಪ್‌ಗಳ ಮೇಲೆ ಪ್ರದರ್ಶನ” ಆನ್ ಮಾಡಿ.</string>

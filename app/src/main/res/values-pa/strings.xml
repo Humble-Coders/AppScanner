@@ -105,6 +105,7 @@
     <string name="finance_blocked_title">ਖੋਲ੍ਹਣਾ ਰੋਕਿਆ</string>
     <string name="finance_blocked_message">ਹਾਲੀਆ ਕਾਲ ਵਿੱਚ ਘਪਲੇ ਦੀ ਸੰਭਾਵਨਾ। ਗਾਰਡੀਅਨ ਦੀ ਮਨਜ਼ੂਰੀ ਤੱਕ ਫਾਇਨੈਂਸ ਐਪ ਲਾਕ।</string>
     <string name="finance_blocked_go_home">ਹੋਮ \'ਤੇ ਜਾਓ</string>
+    <string name="finance_blocked_close_cd">ਓਵਰਲੇ ਬੰਦ (ਡੀਬੱਗ)</string>
     <string name="overlay_permission_title">ਹੋਰ ਐਪਾਂ ਉੱਤੇ ਦਿਖਾਓ</string>
     <string name="overlay_permission_body">ਚੇਤਾਵਨੀਆਂ ਲਈ ਇਹ ਇਜਾਜ਼ਤ ਚਾਹੀਦੀ ਹੈ।</string>
     <string name="overlay_permission_steps_hint">ਸੈਟਿੰਗਾਂ ਵਿੱਚ “ਹੋਰ ਐਪਾਂ ਉੱਤੇ ਦਿਖਾਓ” ਚਾਲੂ ਕਰੋ।</string>

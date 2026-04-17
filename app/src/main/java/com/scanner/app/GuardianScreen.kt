@@ -2,6 +2,7 @@ package com.scanner.app
 
 import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,6 +33,9 @@ import com.google.zxing.WriterException
 import com.google.zxing.qrcode.QRCodeWriter
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 
 @Composable
@@ -55,6 +60,20 @@ fun GuardianScreen() {
     var phoneLinkMessage by remember { mutableStateOf("") }
     var phoneLinkError by remember { mutableStateOf(false) }
     var phoneLinkBusy by remember { mutableStateOf(false) }
+    var showGuardianLinkedSuccessDialog by remember { mutableStateOf(false) }
+    var linkedGuardianDisplayName by remember { mutableStateOf<String?>(null) }
+    /** From [wardsByGuardian] live listener (phone link from victim writes here). */
+    var registryWardIds by remember { mutableStateOf<List<String>>(emptyList()) }
+    /** From legacy collection-group on `tokens` (needs index; QR-only old data). */
+    var legacyWardIds by remember { mutableStateOf<List<String>>(emptyList()) }
+    val wardIds = remember(registryWardIds, legacyWardIds) {
+        (registryWardIds + legacyWardIds).distinct()
+    }
+    var wardsLoading by remember { mutableStateOf(false) }
+    var wardRefresh by remember { mutableIntStateOf(0) }
+    var clearFinanceLockMessage by remember { mutableStateOf("") }
+    var clearFinanceLockError by remember { mutableStateOf(false) }
+    var clearFinanceLockBusy by remember { mutableStateOf(false) }
 
     val scanLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
         val scannedUid = result.contents ?: return@rememberLauncherForActivityResult
@@ -65,6 +84,7 @@ fun GuardianScreen() {
             try {
                 GuardianManager.linkAsGuardian(scannedUid)
                 isGuardianLinked = true
+                wardRefresh++
                 statusMessage = "You are now a guardian! You will receive alerts if they install a risky app."
             } catch (e: Exception) {
                 guardianLinkError = true
@@ -87,6 +107,46 @@ fun GuardianScreen() {
         } finally {
             isLoading = false
         }
+    }
+
+    LaunchedEffect(userId, wardRefresh) {
+        if (userId == null) return@LaunchedEffect
+        wardsLoading = true
+        clearFinanceLockMessage = ""
+        clearFinanceLockError = false
+        try {
+            legacyWardIds = GuardianManager.listLegacyProtectedUserIdsFromCollectionGroup()
+        } catch (_: Exception) {
+            legacyWardIds = emptyList()
+        } finally {
+            wardsLoading = false
+        }
+    }
+
+    LaunchedEffect(userId) {
+        val uid = userId ?: return@LaunchedEffect
+        val registration = GuardianManager.addWardsRegistryListener(uid) { ids ->
+            registryWardIds = ids
+        }
+        try {
+            awaitCancellation()
+        } finally {
+            registration.remove()
+        }
+    }
+
+    val activity = LocalContext.current as? AppCompatActivity
+    DisposableEffect(activity, userId) {
+        if (activity == null || userId == null) {
+            return@DisposableEffect onDispose { }
+        }
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                wardRefresh++
+            }
+        }
+        activity.lifecycle.addObserver(observer)
+        onDispose { activity.lifecycle.removeObserver(observer) }
     }
 
     LazyColumn(
@@ -237,11 +297,11 @@ fun GuardianScreen() {
                         unfocusedTextColor = Color.White
                     )
                 )
-                if (phoneLinkMessage.isNotEmpty()) {
+                if (phoneLinkError && phoneLinkMessage.isNotEmpty()) {
                     Spacer(Modifier.height(10.dp))
                     Text(
                         text = phoneLinkMessage,
-                        color = if (phoneLinkError) Color(0xFFFF6D00) else accent,
+                        color = Color(0xFFFF6D00),
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center
                     )
@@ -257,12 +317,11 @@ fun GuardianScreen() {
                                 val guardianName =
                                     GuardianManager.linkGuardianByPhoneNumber(context, guardianPhoneInput)
                                 guardianPhoneInput = ""
-                                phoneLinkMessage = if (!guardianName.isNullOrBlank()) {
-                                    context.getString(R.string.guardian_linked_named, guardianName)
-                                } else {
-                                    context.getString(R.string.guardian_linked_anon)
-                                }
+                                phoneLinkMessage = ""
                                 phoneLinkError = false
+                                linkedGuardianDisplayName =
+                                    guardianName?.trim()?.takeIf { it.isNotBlank() }
+                                showGuardianLinkedSuccessDialog = true
                             } catch (e: Exception) {
                                 phoneLinkError = true
                                 phoneLinkMessage = e.message ?: context.getString(R.string.guardian_link_failed)
@@ -293,6 +352,108 @@ fun GuardianScreen() {
                 }
             }
             Spacer(Modifier.height(16.dp))
+        }
+
+        if (wardIds.isNotEmpty() || wardsLoading) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(cardBg)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(R.string.guardian_wards_title),
+                        color = guardianBlue,
+                        fontSize = 10.sp,
+                        letterSpacing = 2.sp
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.guardian_wards_subtitle),
+                        color = textSecondary,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 18.sp
+                    )
+                    if (wardsLoading) {
+                        Spacer(Modifier.height(16.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(28.dp),
+                            color = guardianBlue,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            text = stringResource(R.string.guardian_wards_count, wardIds.size),
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    if (clearFinanceLockMessage.isNotEmpty()) {
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            text = clearFinanceLockMessage,
+                            color = if (clearFinanceLockError) Color(0xFFFF6D00) else accent,
+                            fontSize = 13.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    if (!wardsLoading && wardIds.isNotEmpty()) {
+                        Spacer(Modifier.height(16.dp))
+                        Button(
+                            onClick = {
+                                clearFinanceLockMessage = ""
+                                clearFinanceLockError = false
+                                scope.launch {
+                                    clearFinanceLockBusy = true
+                                    try {
+                                        GuardianManager.clearFinanceLockForAllProtectedUsers()
+                                        clearFinanceLockMessage =
+                                            context.getString(R.string.guardian_clear_finance_lock_done)
+                                        clearFinanceLockError = false
+                                    } catch (e: Exception) {
+                                        clearFinanceLockError = true
+                                        clearFinanceLockMessage =
+                                            e.message
+                                                ?: context.getString(R.string.guardian_clear_finance_lock_failed)
+                                    } finally {
+                                        clearFinanceLockBusy = false
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            enabled = !clearFinanceLockBusy,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = accent,
+                                contentColor = Color(0xFF0D0F14)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            if (clearFinanceLockBusy) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(22.dp),
+                                    color = Color(0xFF0D0F14),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Text(
+                                    stringResource(R.string.guardian_clear_finance_lock),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp
+                                )
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+            }
         }
 
         // Become a Guardian card
@@ -447,6 +608,60 @@ fun GuardianScreen() {
     }
 
     val pitchRole by PitchPhoneRoleStore.role.collectAsState()
+
+    if (showGuardianLinkedSuccessDialog) {
+        val name = linkedGuardianDisplayName
+        AlertDialog(
+            onDismissRequest = {
+                showGuardianLinkedSuccessDialog = false
+                linkedGuardianDisplayName = null
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    contentDescription = stringResource(R.string.cd_guardian_linked_success),
+                    modifier = Modifier.size(56.dp),
+                    tint = accent
+                )
+            },
+            title = {
+                Text(
+                    text = if (!name.isNullOrBlank()) {
+                        stringResource(R.string.guardian_linked_dialog_title_with_name, name)
+                    } else {
+                        stringResource(R.string.guardian_linked_dialog_title)
+                    },
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Text(
+                    text = if (!name.isNullOrBlank()) {
+                        stringResource(R.string.guardian_linked_dialog_body_named)
+                    } else {
+                        stringResource(R.string.guardian_linked_dialog_body_anon)
+                    },
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 15.sp,
+                    lineHeight = 22.sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showGuardianLinkedSuccessDialog = false
+                        linkedGuardianDisplayName = null
+                    }
+                ) {
+                    Text(stringResource(R.string.guardian_linked_dialog_ok))
+                }
+            }
+        )
+    }
 
     if (showPitchRoleDialog) {
         AlertDialog(

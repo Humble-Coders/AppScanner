@@ -21,6 +21,7 @@ import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
@@ -84,6 +85,11 @@ class AppScannerService : AccessibilityService() {
                     .addSnapshotListener { snap, _ ->
                         val until = snap?.getLong("financeUnlockUntilMs") ?: 0L
                         ScamAlertState.setFinanceUnlockUntilMs(until)
+                        handler.post {
+                            if (!ScamAlertState.shouldBlockFinanceApps()) {
+                                removeFinanceBlockOverlay()
+                            }
+                        }
                     }
             } catch (e: Exception) {
                 Log.e(TAG, "finance unlock listener failed", e)
@@ -874,10 +880,10 @@ class AppScannerService : AccessibilityService() {
                 removeCurrentOverlay()
                 val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
                 val root = LayoutInflater.from(this).inflate(R.layout.finance_app_blocked_overlay, null)
+                root.findViewById<ImageButton>(R.id.close_button).setOnClickListener {
+                    handler.post { removeFinanceBlockOverlay() }
+                }
                 root.findViewById<Button>(R.id.go_home_button).setOnClickListener {
-                    // Defer via handler so we're not calling removeView() while the
-                    // window is still dispatching the touch event (causes silent crash).
-                    // Remove overlay first, then navigate — prevents re-trigger race.
                     handler.post {
                         removeFinanceBlockOverlay()
                         performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
