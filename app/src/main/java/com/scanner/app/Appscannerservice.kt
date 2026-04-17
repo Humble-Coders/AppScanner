@@ -570,6 +570,7 @@ class AppScannerService : AccessibilityService() {
                     financeUnlockBtn.backgroundTintList = ColorStateList.valueOf(green)
                     financeUnlockBtn.setTextColor(Color.WHITE)
                     financeUnlockBtn.setOnClickListener {
+                        Log.d(TAG, "guardian overlay: finance unlock tapped for protected=${alert.protectedUserUid.take(8)}…")
                         serviceScope.launch(Dispatchers.IO) {
                             try {
                                 GuardianManager.grantFinanceUnlockToProtectedUser(alert.protectedUserUid)
@@ -592,7 +593,8 @@ class AppScannerService : AccessibilityService() {
                         @Suppress("DEPRECATION")
                         WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
                     }
-                    flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                             WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
                     format = android.graphics.PixelFormat.TRANSLUCENT
                 }
@@ -881,12 +883,14 @@ class AppScannerService : AccessibilityService() {
                 val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
                 val root = LayoutInflater.from(this).inflate(R.layout.finance_app_blocked_overlay, null)
                 root.findViewById<ImageButton>(R.id.close_button).setOnClickListener {
+                    Log.d(TAG, "finance overlay: close tapped")
                     handler.post { removeFinanceBlockOverlay() }
                 }
                 root.findViewById<Button>(R.id.go_home_button).setOnClickListener {
                     handler.post {
                         removeFinanceBlockOverlay()
-                        performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
+                        val ok = performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
+                        Log.d(TAG, "finance overlay: performGlobalAction(HOME)=$ok")
                     }
                 }
                 val params = WindowManager.LayoutParams().apply {
@@ -898,7 +902,8 @@ class AppScannerService : AccessibilityService() {
                         @Suppress("DEPRECATION")
                         WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
                     }
-                    flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                             WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
                     format = android.graphics.PixelFormat.TRANSLUCENT
                 }
