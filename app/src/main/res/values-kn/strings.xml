@@ -170,10 +170,10 @@
     <string name="protection_badge_label">AppShield AI ಈ ಕರೆನ್ನು ರಕ್ಷಿಸುತ್ತಿದೆ</string>
 
     <string name="call_protection_title">ಕಾಲ್ ರಕ್ಷಣೆ</string>
-    <string name="call_protection_always_title">ಯಾವಾಗಲೂ ಕೇಳಿ</string>
-    <string name="call_protection_always_body">WhatsApp ಕರೆಗಳ ವೇಳೆ ವಂಚನೆ ಪದಗಳನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಪತ್ತೆಮಾಡಿ.</string>
+    <string name="call_protection_always_title">ಸ್ವಯಂ ಅಪಾಯ ಪ್ರೊಫೈಲಿಂಗ್</string>
+    <string name="call_protection_always_body">WhatsApp ಕರೆಗಳ ಸಮಯದಲ್ಲಿ ಅಪಾಯವನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಪತ್ತೆಮಾಡುತ್ತದೆ.</string>
     <string name="call_protection_ask_title">ಪ್ರತಿ ಬಾರಿ ಕೇಳಿ</string>
-    <string name="call_protection_ask_body">ಕರೆ ಸಾಮಾನ್ಯವಾಗಿ ರೆಕಾರ್ಡ್ ಆಗುತ್ತದೆ, ಆದರೆ “ನನ್ನ ಕರೆ ಪರಿಶೀಲಿಸಿ” ಒತ್ತಿದ ನಂತರವೇ ಪತ್ತೆ ಆರಂಭವಾಗುತ್ತದೆ.</string>
+    <string name="call_protection_ask_body">ನಿಮ್ಮ ಅನುಮತಿಯ ನಂತರ ಮಾತ್ರ ಪ್ರೊಫೈಲಿಂಗ್ ಪ್ರಾರಂಭವಾಗುತ್ತದೆ.</string>
 
     <string name="check_my_call">ನನ್ನ ಕರೆ ಪರಿಶೀಲಿಸಿ</string>
 

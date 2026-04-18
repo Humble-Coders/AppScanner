@@ -170,10 +170,10 @@
     <string name="protection_badge_label">AppShield AI इस कॉल की सुरक्षा कर रहा है</string>
 
     <string name="call_protection_title">कॉल सुरक्षा</string>
-    <string name="call_protection_always_title">हमेशा सुनें</string>
-    <string name="call_protection_always_body">WhatsApp कॉल के दौरान स्कैम शब्द अपने आप पहचानें।</string>
+    <string name="call_protection_always_title">ऑटो जोखिम प्रोफाइलिंग</string>
+    <string name="call_protection_always_body">WhatsApp कॉल के दौरान जोखिम अपने आप पहचानता है।</string>
     <string name="call_protection_ask_title">हर बार पूछें</string>
-    <string name="call_protection_ask_body">कॉल सामान्य रूप से रिकॉर्ड होगी, लेकिन “मेरी कॉल जाँचें” टैप करने के बाद ही पहचान शुरू होगी।</string>
+    <string name="call_protection_ask_body">आपकी मंज़ूरी के बाद ही प्रोफाइलिंग शुरू होती है।</string>
 
     <string name="check_my_call">मेरी कॉल जाँचें</string>
 

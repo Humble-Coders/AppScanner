@@ -192,10 +192,10 @@
 
     <!-- Call protection mode (home/scanner screen) -->
     <string name="call_protection_title">CALL PROTECTION</string>
-    <string name="call_protection_always_title">Always listening</string>
-    <string name="call_protection_always_body">Detect scam phrases automatically during WhatsApp calls.</string>
+    <string name="call_protection_always_title">Auto risk profiling</string>
+    <string name="call_protection_always_body">Will auto-detect risk during WhatsApp calls.</string>
     <string name="call_protection_ask_title">Ask every time</string>
-    <string name="call_protection_ask_body">Record the call normally, but only start detection after you tap “Check my call”.</string>
+    <string name="call_protection_ask_body">Only starts profiling after your approval.</string>
 
     <!-- Ask mode in-call overlay -->
     <string name="check_my_call">Check my call</string>

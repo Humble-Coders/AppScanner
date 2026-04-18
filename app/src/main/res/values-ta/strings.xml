@@ -170,10 +170,10 @@
     <string name="protection_badge_label">AppShield AI இந்த அழைப்பை பாதுகாக்கிறது</string>
 
     <string name="call_protection_title">அழைப்பு பாதுகாப்பு</string>
-    <string name="call_protection_always_title">எப்போதும் கேள்</string>
-    <string name="call_protection_always_body">WhatsApp அழைப்புகளில் மோசடி சொற்களை தானாக கண்டறியும்.</string>
+    <string name="call_protection_always_title">தானியங்கி ஆபத்து சுயவிவரம்</string>
+    <string name="call_protection_always_body">WhatsApp அழைப்புகளின் போது ஆபத்தை தானாக கண்டறியும்.</string>
     <string name="call_protection_ask_title">ஒவ்வொரு முறையும் கேள்</string>
-    <string name="call_protection_ask_body">அழைப்பு வழக்கம்போல் பதிவு செய்யப்படும், ஆனால் “என் அழைப்பை சரிபார்” தட்டிய பிறகே கண்டறிதல் தொடங்கும்.</string>
+    <string name="call_protection_ask_body">உங்கள் ஒப்புதலுக்குப் பிறகே சுயவிவரம் தொடங்கும்.</string>
 
     <string name="check_my_call">என் அழைப்பை சரிபார்</string>
 

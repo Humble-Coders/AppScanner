@@ -170,10 +170,10 @@
     <string name="protection_badge_label">AppShield AI ఈ కాల్‌ను రక్షిస్తోంది</string>
 
     <string name="call_protection_title">కాల్ రక్షణ</string>
-    <string name="call_protection_always_title">ఎల్లప్పుడూ వినండి</string>
-    <string name="call_protection_always_body">WhatsApp కాల్‌లలో మోసం పదాలను ఆటోగా గుర్తిస్తుంది.</string>
+    <string name="call_protection_always_title">ఆటో రిస్క్ ప్రొఫైలింగ్</string>
+    <string name="call_protection_always_body">WhatsApp కాల్‌ల సమయంలో ప్రమాదాన్ని ఆటోమేటిక్‌గా గుర్తిస్తుంది.</string>
     <string name="call_protection_ask_title">ప్రతిసారి అడుగు</string>
-    <string name="call_protection_ask_body">కాల్ సాధారణంగా రికార్డ్ అవుతుంది, కానీ “నా కాల్ చెక్ చేయి” నొక్కిన తర్వాతే గుర్తింపు ప్రారంభమవుతుంది.</string>
+    <string name="call_protection_ask_body">మీ అనుమతి తర్వాత మాత్రమే ప్రొఫైలింగ్ ప్రారంభమవుతుంది.</string>
 
     <string name="check_my_call">నా కాల్ చెక్ చేయి</string>
 
